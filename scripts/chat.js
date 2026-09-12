@@ -1213,7 +1213,7 @@ function initEventListeners() {
 
   // Live Radar Upgrade Button
   upgradeBtn.addEventListener('click', () => {
-    messageInput.value = "Are there any active cyclone or flood warnings in India right now?";
+    messageInput.value = "what is the current weather?";
     updateSendBtnState();
     sendMessage();
   });
