@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherGPT — Conversational Weather Intelligence</title>
+  <meta name="description" content="Official WeatherGPT conversational assistant powered by IMD meteorological data and MoES forecasting models." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/chat.css" />
+</head>
+<body class="gemini-layout">
+
+  <!-- =========================================================
+       SLIM ICON RAIL (Gemini style far-left vertical navigation)
+       ========================================================= -->
+  <nav class="icon-rail" id="iconRail" aria-label="Main Navigation">
+    <div class="rail-top">
+      <!-- Gemini / WeatherGPT 4-Pointed Sparkle Star Logo -->
+      <a href="index.html" class="rail-logo-link" title="WeatherGPT Home" aria-label="WeatherGPT Home">
+        <svg class="gemini-sparkle-logo" width="30" height="30" viewBox="0 0 28 28" fill="none">
+          <path d="M14 0C14 7.732 7.732 14 0 14C7.732 14 14 20.268 14 28C14 20.268 20.268 14 28 14C20.268 14 14 7.732 14 0Z" fill="url(#geminiGradRail)"/>
+          <defs>
+            <linearGradient id="geminiGradRail" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#4285F4"/>
+              <stop offset="0.32" stop-color="#9B72CF"/>
+              <stop offset="0.68" stop-color="#D96570"/>
+              <stop offset="1" stop-color="#F2A600"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </a>
+
+      <!-- Compose / New Chat -->
+      <button class="rail-btn active" id="railNewChat" title="New conversation" aria-label="New conversation">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        <span class="rail-tooltip">New chat</span>
+      </button>
+
+      <!-- Search / History Drawer Toggle -->
+      <button class="rail-btn" id="railSearch" title="Recent conversations" aria-label="Recent conversations">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="rail-tooltip">Search & Recents</span>
+      </button>
+
+      <!-- Specialized Weather Modes -->
+      <button class="rail-btn" id="railModes" title="Specialized Modes (Farmer / Travel / Alerts)" aria-label="Specialized Modes">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <span class="rail-tooltip">Weather Modes</span>
+      </button>
+
+      <!-- Satellite & 4K Feeds from sources/ -->
+      <button class="rail-btn" id="railMedia" title="Satellite & 4K Drone Feeds" aria-label="Satellite & Drone Feeds">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span class="rail-tooltip">Sources & Satellite Feeds</span>
+      </button>
+
+      <!-- Apps / IMD Tools Grid -->
+      <button class="rail-btn" id="railApps" title="IMD Observation Tools" aria-label="IMD Tools">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <span class="rail-tooltip">MoES / IMD Portal</span>
+      </button>
+    </div>
+
+    <div class="rail-bottom">
+      <!-- Settings -->
+      <button class="rail-btn" id="railSettings" title="Settings & Language" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span class="rail-tooltip">Settings</span>
+      </button>
+
+      <!-- Profile Avatar -->
+      <div class="user-avatar-btn" id="userAvatarBtn" title="User Profile (CODING)" aria-label="User Profile">
+        <div class="avatar-ring">
+          <svg width="34" height="34" viewBox="0 0 34 34">
+            <circle cx="17" cy="17" r="16" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+            <text x="50%" y="54%" text-anchor="middle" fill="#60a5fa" font-size="12" font-family="sans-serif" font-weight="bold" dy=".3em">C</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =========================================================
+       DRAWER / SIDEBAR (Collapsible for History & Quick Queries)
+       ========================================================= -->
+  <aside class="drawer-panel" id="drawerPanel" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title">Recent Conversations</div>
+      <button class="drawer-close" id="drawerClose" aria-label="Close drawer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="drawer-new-btn" id="drawerNewBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        New Conversation
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <div class="drawer-section-label">History</div>
+      <div class="chat-history" id="chatHistory">
+        <div class="history-item active" id="hist-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Current Conversation
+        </div>
+      </div>
+
+      <div class="drawer-section-label" style="margin-top: 24px;">Output Language</div>
+      <div class="drawer-lang-toggle">
+        <button class="lang-btn active" data-lang="en">English (EN)</button>
+        <button class="lang-btn" data-lang="hi">हिन्दी (HI)</button>
+        <button class="lang-btn" data-lang="te">తెలుగు (TE)</button>
+      </div>
+
+      <div class="drawer-section-label" style="margin-top: 24px;">Quick Queries</div>
+      <div class="quick-queries" id="quickQueries">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <a href="index.html" class="drawer-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </a>
+    </div>
+  </aside>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+  <!-- =========================================================
+       MAIN CHAT WORKSPACE
+       ========================================================= -->
+  <main class="chat-workspace" id="chatWorkspace">
+
+    <!-- ── Top Transparent Header Bar ───────────────────────── -->
+    <header class="gemini-header">
+      <div class="gemini-header-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="header-app-name">WeatherGPT</span>
+      </div>
+
+      <div class="gemini-header-right">
+        <!-- Upgrade / Live Radar Pill (Exactly like "+ Upgrade" in Gemini) -->
+        <button class="gemini-upgrade-btn" id="upgradeBtn" title="Connect Live IMD Doppler Radar">
+          <svg class="upgrade-spark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>Live Radar</span>
+        </button>
+
+        <!-- Clear Chat button -->
+        <button class="header-icon-btn" id="clearBtn" title="Reset to Empty State" aria-label="Clear chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Return to Home -->
+        <a href="index.html" class="header-icon-btn" title="Back to Home Page" aria-label="Home page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- ── Center Stage & Message Flow ──────────────────────── -->
+    <section class="chat-stage" id="chatStage">
+
+      <!-- Scrollable Message List (visible during conversation) -->
+      <div class="messages-flow-wrap" id="messagesFlowWrap">
+        <div class="messages-list" id="messagesList"></div>
+      </div>
+
+      <!-- Centered Greeting & Hero (visible when no messages) -->
+      <div class="empty-hero" id="emptyHero">
+        <h1 class="gemini-hero-title" id="heroTitle">The mic is yours, CODING</h1>
+        <p class="gemini-hero-sub" id="heroSub">Ask anything about real-time weather, IMD cyclone alerts, rainfall, or farming advisories</p>
+      </div>
+
+      <!-- Input Bar Container (Centered when empty, docked at bottom when chatting) -->
+      <div class="input-container" id="inputContainer">
+        <div class="input-pill" id="inputPill">
+
+          <!-- Left: Attach Button -->
+          <button class="pill-btn attach-btn" id="attachBtn" title="Attach Location / Satellite Product" aria-label="Attach context">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+
+          <!-- Center: Text Area -->
+          <textarea
+            class="gemini-text-input"
+            id="messageInput"
+            placeholder="Ask WeatherGPT"
+            rows="1"
+            aria-label="Ask WeatherGPT"
+          ></textarea>
+
+          <!-- Right Action Cluster inside the Pill -->
+          <div class="pill-right-actions">
+
+            <!-- Model / Mode Selector Pill (Like "Flash ∨" in Gemini) -->
+            <div class="mode-dropdown-wrap" id="modeDropdownWrap">
+              <button class="mode-selector-btn" id="modeSelectorBtn" type="button" aria-haspopup="true" aria-expanded="false">
+                <span class="active-mode-label" id="activeModeLabel">Flash</span>
+                <svg class="mode-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div class="mode-menu" id="modeMenu">
+                <div class="mode-menu-item active" data-mode="home">
+                  <div class="mmi-icon">⚡</div>
+                  <div class="mmi-info">
+                    <div class="mmi-title">Flash (Home Mode)</div>
+                    <div class="mmi-desc">Fast weather insights & daily forecasts</div>
+                  </div>
+                </div>
+                <div class="mode-menu-item" data-mode="farmer">
+                  <div class="mmi-icon">🌾</div>
+                  <div class="mmi-info">
+                    <div class="mmi-title">Farmer Mode</div>
+                    <div class="mmi-desc">Agro-meteorology, soil moisture & crop alerts</div>
+                  </div>
+                </div>
+                <div class="mode-menu-item" data-mode="travel">
+                  <div class="mmi-icon">✈️</div>
+                  <div class="mmi-info">
+                    <div class="mmi-title">Travel Mode</div>
+                    <div class="mmi-desc">Route rain status, visibility & flight weather</div>
+                  </div>
+                </div>
+                <div class="mode-menu-item" data-mode="marine">
+                  <div class="mmi-icon">⚓</div>
+                  <div class="mmi-info">
+                    <div class="mmi-title">Marine Mode</div>
+                    <div class="mmi-desc">INCOIS wave swell, tidal windows & sea safety</div>
+                  </div>
+                </div>
+                <div class="mode-menu-item" data-mode="alert">
+                  <div class="mmi-icon">🚨</div>
+                  <div class="mmi-info">
+                    <div class="mmi-title">Disaster Alerts</div>
+                    <div class="mmi-desc">IMD red warnings, cyclones & flood alerts</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Voice Input Button (with waveform) -->
+            <button class="pill-btn voice-btn" id="voiceBtn" title="Voice Input / Recording" aria-label="Record voice query">
+              <svg class="voice-mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              <svg class="voice-stop-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="5" width="14" height="14" rx="2"/>
+              </svg>
+            </button>
+
+            <!-- Send Button -->
+            <button class="pill-btn send-btn" id="sendBtn" disabled title="Send message" aria-label="Send message">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Live Voice Recording Audio Wave Bar -->
+        <div class="recording-status-bar" id="recordingBar">
+          <div class="rec-dot-pulse"></div>
+          <span class="rec-text" id="recLabel">Listening... speak your weather question</span>
+          <div class="audio-wave">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Suggestion Chips (Visible only when empty) -->
+        <div class="prompt-chips" id="promptChips">
+          <button class="chip-item" data-query="What is today's weather in Mumbai?">
+            <span class="chip-icon">🌧</span> Today's Mumbai rain nowcast
+          </button>
+          <button class="chip-item" data-query="Are there any active cyclone or flood warnings in India right now?">
+            <span class="chip-icon">🚨</span> Active cyclone & flood alerts
+          </button>
+          <button class="chip-item" data-query="What is the 7-day forecast for Delhi?">
+            <span class="chip-icon">📅</span> Delhi 7-day monsoon forecast
+          </button>
+          <button class="chip-item" data-query="What is the crop weather advisory for Punjab wheat this week?">
+            <span class="chip-icon">🌾</span> Agro-weather crop advisory
+          </button>
+        </div>
+
+        <!-- Disclaimer Footer -->
+        <div class="input-legal-footer" id="legalFooter">
+          <span>WeatherGPT can make mistakes. Verify critical alerts with official IMD bulletins.</span>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <!-- =========================================================
+       SOURCES & SATELLITE FEEDS MODAL (Local media from sources/)
+       ========================================================= -->
+  <div class="media-modal-backdrop" id="mediaModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="media-modal-card">
+      <div class="mm-header">
+        <div class="mm-title-group">
+          <h3 class="mm-title">Meteorological Feeds & 4K Aerial Observation</h3>
+          <p class="mm-sub">High-resolution atmospheric scans and station telemetry from local sources</p>
+        </div>
+        <button class="mm-close" id="mediaModalClose" aria-label="Close feeds">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="mm-grid">
+        <!-- 4K Drone Video -->
+        <div class="mm-card">
+          <div class="mm-video-wrap">
+            <video autoplay muted loop playsinline class="mm-video">
+              <source src="sources/weather_drone_4k.mov" type="video/mp4" />
+              <source src="sources/hero_clouds_4k.mov" type="video/mp4" />
+            </video>
+            <span class="mm-tag live">4K Telemetry</span>
+          </div>
+          <div class="mm-body">
+            <h4>Atmospheric Boundary Drone Scan</h4>
+            <p>2156×1288 60fps high-altitude drone tracking monsoon cloud build-up and inversion layers.</p>
+            <button class="mm-query-btn" data-query="Analyze current cloud layer altitude and rainfall probability from drone scan">Ask AI about this feed →</button>
+          </div>
+        </div>
+
+        <!-- 4K Cloud Dynamics -->
+        <div class="mm-card">
+          <div class="mm-video-wrap">
+            <video autoplay muted loop playsinline class="mm-video">
+              <source src="sources/hero_clouds_4k.mov" type="video/mp4" />
+              <source src="sources/weather_drone_4k.mov" type="video/mp4" />
+            </video>
+            <span class="mm-tag">2822×1742 UHD</span>
+          </div>
+          <div class="mm-body">
+            <h4>Cumulonimbus Inflow Velocity</h4>
+            <p>High-resolution satellite & atmospheric capture over Indian subcontinent monitoring convection.</p>
+            <button class="mm-query-btn" data-query="What is the convective storm forecast for convective clouds?">Ask AI about storm risk →</button>
+          </div>
+        </div>
+
+        <!-- Observation Station 1: Meghalaya Valley Fields -->
+        <div class="mm-card">
+          <div class="mm-img-wrap">
+            <img src="sources/valley_fields.png" alt="Meghalaya Agro-Weather Station" class="mm-img" />
+            <span class="mm-tag">Agro Station</span>
+          </div>
+          <div class="mm-body">
+            <h4>Northeast Agro-Weather Observation</h4>
+            <p>Terrace agriculture & valley humidity monitoring station recording monsoon precipitation.</p>
+            <button class="mm-query-btn" data-query="What are the soil moisture and rainfall stats for Northeast terrace farms?">Ask AI for agro advice →</button>
+          </div>
+        </div>
+
+        <!-- Observation Station 2: Varanasi Ganges Basin -->
+        <div class="mm-card">
+          <div class="mm-img-wrap">
+            <img src="sources/varanasi_ghats.png" alt="Ganga Basin Hydrology Station" class="mm-img" />
+            <span class="mm-tag">Hydrology</span>
+          </div>
+          <div class="mm-body">
+            <h4>Ganga Basin River Hydrology</h4>
+            <p>Surface water level, morning mist visibility, and flood monitoring sensor station on the Ganges.</p>
+            <button class="mm-query-btn" data-query="What is the Ganga river basin flood level and mist forecast in Varanasi?">Ask AI about river alerts →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/chat.js"></script>
+</body>
+</html>

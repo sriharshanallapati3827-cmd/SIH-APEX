@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherGPT — Conversational AI for Weather Intelligence</title>
+  <meta name="description" content="WeatherGPT — Real-time weather intelligence for India. Conversational AI powered by IMD and OpenWeatherMap." />
+  <meta name="keywords" content="WeatherGPT, weather AI, IMD, India weather, cyclone alerts, forecast" />
+
+  <!-- Google Fonts: Bebas Neue for giant display text + Inter for body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Outfit:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles/landing.css" />
+</head>
+<body>
+
+  <!-- =========================================================
+       HOW IT WORKS — Sticky right-edge tab (like White Desert)
+       Clicking opens a slide-over panel explaining the AI flow
+       ========================================================= -->
+  <div class="hiw-tab" id="hiwTab" role="button" tabindex="0" aria-label="How it works">
+    <span>How it works</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+
+  <!-- How it works slide panel -->
+  <div class="hiw-panel" id="hiwPanel" aria-hidden="true">
+    <button class="hiw-close" id="hiwClose" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="hiw-content">
+      <div class="hiw-eyebrow">Process</div>
+      <h3 class="hiw-title">How WeatherGPT Works</h3>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-step-num">01</div>
+          <div class="hiw-step-body">
+            <strong>Context &amp; Mode Detection</strong>
+            <span>Automatically detects whether you are farming, driving a highway route, fishing coastal waters, or tracking disaster risks.</span>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">02</div>
+          <div class="hiw-step-body">
+            <strong>Automatic Data Orchestration</strong>
+            <span>Dynamically queries the relevant scientific tools: 4,000+ IMD stations, Doppler radars, CWC river gauges, and INCOIS wave models.</span>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">03</div>
+          <div class="hiw-step-body">
+            <strong>Situation-Specific Reasoning</strong>
+            <span>Determines what the weather means for your specific activity: crop phenology, hydroplaning risk, or surge inundation.</span>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">04</div>
+          <div class="hiw-step-body">
+            <strong>Actionable Decisions Delivered</strong>
+            <span>Provides precise recommendations (e.g. 48h spray windows, departure delays, pass chains) in English, Hindi, or Telugu.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hiw-overlay" id="hiwOverlay"></div>
+
+  <!-- ==========================================================
+       FULLSCREEN BACKGROUND VIDEO
+       ==========================================================
+       HOW TO USE YOUR OWN 4K VIDEO:
+         1. Place your .mp4 file in the project folder (e.g. bg-video.mp4)
+         2. Change the <source src="..."> to: src="bg-video.mp4"
+         3. For performance: encode at H.264 for MP4, VP9 for WebM
+            ffmpeg -i input.mp4 -c:v libx264 -crf 23 -preset slow bg-video.mp4
+         4. For 4K: use -s 3840x2160 in ffmpeg, or just drop the raw 4K file
+            (browser will handle it, but a CDN/local server is recommended)
+
+       FALLBACK: If video doesn't load (offline/slow network), the CSS
+       gradient background on body shows instead.
+
+       CURRENT SOURCE: Free Pexels storm clouds video (no login required)
+       ========================================================= -->
+  <video
+    id="bgVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    aria-hidden="true"
+    poster=""
+  >
+    <!--
+      Primary source — Pexels free stock footage (storm/clouds aerial)
+      Replace this src with your own 4K video file path.
+    -->
+    <!-- Local 4K recordings from sources/ -->
+    <source src="sources/weather_drone_4k.mov" type="video/mp4" />
+    <source src="sources/monsoon_landscape.mov" type="video/mp4" />
+    <!-- Online fallbacks -->
+    <source src="https://videos.pexels.com/video-files/3997983/3997983-uhd_2560_1440_24fps.mp4" type="video/mp4" />
+  </video>
+
+  <!-- Dark gradient overlay — fades from transparent (top) to deep black (bottom)
+       Makes the giant hero text readable without losing the cinematic image -->
+  <div class="video-overlay" aria-hidden="true"></div>
+
+
+  <!-- ==========================================================
+       NAVIGATION — Transparent, minimal, editorial
+       ========================================================= -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-left">
+      <a href="#climates" class="nav-link" id="navFeatures">Climates</a>
+      <a href="#modes" class="nav-link" id="navModes">Modes & USP</a>
+      <a href="#about" class="nav-link" id="navAbout">About</a>
+    </div>
+
+    <div class="nav-center">
+      <a href="/" class="nav-logo-link" id="navLogo">
+        <!-- Small SVG cloud icon above the wordmark -->
+        <svg width="24" height="18" viewBox="0 0 36 24" fill="none" aria-hidden="true">
+          <path d="M28 20H8a6 6 0 0 1 0-12 6 6 0 0 1 11.5-3A7 7 0 1 1 28 20z" fill="white" fill-opacity="0.9"/>
+        </svg>
+        <span>WEATHERGPT</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="https://github.com" class="nav-link" id="navGithub" target="_blank" rel="noopener">GitHub</a>
+      <a href="chat.html" class="nav-link nav-cta" id="navChat">Launch Chat</a>
+    </div>
+  </nav>
+
+
+  <!-- ==========================================================
+       HERO — Full-screen, cinematic layout
+       Three zones:
+         TOP    — navbar (above)
+         MIDDLE — small tagline left + "Watch Demo" right
+         BOTTOM — giant "WEATHERGPT" display text
+       ========================================================= -->
+  <section class="hero" id="hero">
+
+    <!-- Middle tier: left tagline + right video switcher & watch film link -->
+    <div class="hero-mid">
+      <p class="hero-tagline" id="heroTagline">
+        From weather information<br/>
+        to weather decisions.
+      </p>
+
+      <div class="hero-mid-right">
+        <!-- Live Video Switcher: Drone 4K vs Monsoon Valley -->
+        <div class="hero-video-switcher" id="heroVidSwitcher">
+          <button class="hvs-btn active" id="btnVidDrone" data-src="sources/weather_drone_4k.mov" title="Switch to 4K Drone Video">
+            <span class="hvs-dot"></span> 4K Drone
+          </button>
+          <button class="hvs-btn" id="btnVidMonsoon" data-src="sources/monsoon_landscape.mov" title="Switch to Monsoon Valley Video">
+            <span class="hvs-dot"></span> Monsoon
+          </button>
+        </div>
+
+        <button class="watch-demo-btn" id="watchDemoBtn">
+          Watch Film
+          <span class="play-circle" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom tier: giant display word + CTA -->
+    <div class="hero-bottom">
+      <div class="hero-giant-wrap">
+        <!-- The massive cinematic title text — like "ANTARCTICA" on White Desert -->
+        <h1 class="hero-giant" id="heroGiant">WEATHERGPT</h1>
+      </div>
+
+      <!-- IMD badge — bottom left above the giant text -->
+      <div class="hero-meta">
+        <span class="hero-badge">
+          <span class="live-dot" aria-hidden="true"></span>
+          SIH 2026 · Problem #SIH26068 · Ministry of Earth Sciences
+        </span>
+        <a href="chat.html" class="hero-enter-btn" id="heroEnterBtn">
+          Enter Experience
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       SCROLL INDICATOR — subtle animated arrow at very bottom
+       ========================================================= -->
+  <div class="scroll-cue" id="scrollCue" aria-hidden="true">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+
+
+  <!-- ==========================================================
+       LIVE NATIONAL WEATHER MARQUEE — Real-time telemetry ticker
+       Shows live conditions across major Indian meteorological centers
+       ========================================================= -->
+  <div class="live-weather-marquee-wrap" id="liveWeatherTicker">
+    <div class="lwm-label">
+      <span class="lwm-dot"></span>
+      <span>IMD LIVE RADAR</span>
+    </div>
+    <div class="lwm-track" id="lwmTrack">
+      <div class="lwm-content">
+        <span class="lwm-item"><strong>NEW DELHI</strong> <span class="lwm-temp">34°C</span> ☀️ AQI 128 (Moderate) · NW 12 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>MUMBAI</strong> <span class="lwm-temp">29°C</span> 🌧️ 78% Hum · SW 18 km/h · Marine Inflow</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>BENGALURU</strong> <span class="lwm-temp">24°C</span> 🌤️ 62% Hum · W 8 km/h · Pleasant</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>KOLKATA</strong> <span class="lwm-temp">30°C</span> 🌫️ 82% Hum · E 7 km/h · Delta Haze</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>CHENNAI</strong> <span class="lwm-temp">32°C</span> ⛈️ Gusts 22 km/h · Coastal Surge</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>HYDERABAD</strong> <span class="lwm-temp">29°C</span> 🌦️ 68% Hum · SW 14 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>SHIMLA</strong> <span class="lwm-temp">14°C</span> ❄️ Mist in Valley · N 15 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>SHILLONG</strong> <span class="lwm-temp">19°C</span> 🌧️ 88% Hum · Orographic Cloud</span>
+        <span class="lwm-sep">&bull;</span>
+      </div>
+      <!-- Duplicate for smooth infinite CSS animation loop -->
+      <div class="lwm-content" aria-hidden="true">
+        <span class="lwm-item"><strong>NEW DELHI</strong> <span class="lwm-temp">34°C</span> ☀️ AQI 128 (Moderate) · NW 12 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>MUMBAI</strong> <span class="lwm-temp">29°C</span> 🌧️ 78% Hum · SW 18 km/h · Marine Inflow</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>BENGALURU</strong> <span class="lwm-temp">24°C</span> 🌤️ 62% Hum · W 8 km/h · Pleasant</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>KOLKATA</strong> <span class="lwm-temp">30°C</span> 🌫️ 82% Hum · E 7 km/h · Delta Haze</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>CHENNAI</strong> <span class="lwm-temp">32°C</span> ⛈️ Gusts 22 km/h · Coastal Surge</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>HYDERABAD</strong> <span class="lwm-temp">29°C</span> 🌦️ 68% Hum · SW 14 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>SHIMLA</strong> <span class="lwm-temp">14°C</span> ❄️ Mist in Valley · N 15 km/h</span>
+        <span class="lwm-sep">&bull;</span>
+        <span class="lwm-item"><strong>SHILLONG</strong> <span class="lwm-temp">19°C</span> 🌧️ 88% Hum · Orographic Cloud</span>
+        <span class="lwm-sep">&bull;</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==========================================================
+       STATS STRIP — full-width, minimal
+       ========================================================= -->
+  <section class="stats-strip" id="statsStrip">
+    <div class="stat-block">
+      <div class="stat-num" data-target="500">0+</div>
+      <div class="stat-lbl">Cities Covered</div>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-block">
+      <div class="stat-num" data-target="15">0+</div>
+      <div class="stat-lbl">Indian Languages</div>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-block">
+      <div class="stat-num" data-target="99">0%</div>
+      <div class="stat-lbl">Uptime SLA</div>
+    </div>
+    <div class="stat-divider" aria-hidden="true"></div>
+    <div class="stat-block">
+      <div class="stat-num" data-target="2">0s</div>
+      <div class="stat-lbl">Response Time</div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       WHITE EDITORIAL SECTION — "TO THE END OF THE EARTH" style
+       ==========================================================
+       Light background section with coordinates on both sides
+       and a serif headline — exactly like White Desert's
+       transition section before the dark map.
+       ========================================================= -->
+  <section class="coords-section" id="coordsSection">
+    <!-- Left coordinate — origin point (Kashmir / Srinagar) -->
+    <div class="coord-block coord-left">
+      <div class="coord-deg">34° 05' N  74° 47' E</div>
+      <div class="coord-name">Kashmir (Srinagar)</div>
+    </div>
+
+    <!-- Center editorial headline -->
+    <div class="coord-center">
+      <h2 class="coord-headline">From Kashmir<br/>to Kanyakumari</h2>
+      <p class="coord-body">
+        WeatherGPT ingests live feeds from 4,000+ IMD observation stations,
+        satellite products, and NWP models — then distils it into
+        plain-language answers in under 2 seconds.
+      </p>
+    </div>
+
+    <!-- Right coordinate — Kanyakumari (southernmost point of India) -->
+    <div class="coord-block coord-right">
+      <div class="coord-deg">8° 04' N  77° 33' E</div>
+      <div class="coord-name">Kanyakumari</div>
+    </div>
+  </section>
+  <!-- ==========================================================
+       INDIAN REGIONAL WEATHER & OBSERVATION SHOWCASE
+       Featuring real high-res observation captures from sources/
+       ========================================================== -->
+  <section class="section climates-section" id="climates">
+    <div class="climates-header">
+      <div class="section-eyebrow">Real-Time Indian Microclimates</div>
+      <div class="climates-title-row">
+        <h2 class="section-headline">Across 4 Climatic Frontiers</h2>
+        <div class="climates-sync-bar">
+          <span class="climates-sync-pill" id="climatesSyncPill">
+            <span class="live-sync-dot"></span>
+            <span id="climatesSyncText">Live IMD/AWS Feed · Active</span>
+          </span>
+          <button class="climates-refresh-btn" id="btnRefreshClimates" title="Fetch live meteorological telemetry for all 4 zones">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/></svg>
+            Sync Live
+          </button>
+        </div>
+      </div>
+      <p class="climates-sub">
+        India spans diverse Köppen climate regimes — from coastal Arabian Sea marine inversion layers to Gangetic hydrology and Northeast monsoon cloudbursts.
+      </p>
+    </div>
+
+    <!-- 2x2 Editorial Regional Climate Grid -->
+    <div class="climates-grid">
+
+      <!-- Zone 01: Arabian Sea & Mumbai Coastal Mist -->
+      <article class="climate-card">
+        <div class="cc-media-wrap">
+          <img src="sources/mumbai_sea_link.png" alt="Mumbai Arabian Sea Marine Layer" class="cc-img" />
+          <span class="cc-badge live">Live Coastal Telemetry</span>
+          <span class="cc-coord">18° 58' N &middot; 72° 49' E</span>
+        </div>
+        <div class="cc-content">
+          <div class="cc-zone-tag">Western Marine Frontier</div>
+          <h3 class="cc-title">Arabian Sea Coastal Mist & Marine Inversion</h3>
+          <p class="cc-desc">
+            Early morning sea-breeze moisture convergence over the Bandra-Worli corridor. Continuous tracking of maritime boundary layers and coastal humidity surges.
+          </p>
+          <div class="cc-telemetry-strip">
+            <div class="cct-item">
+              <span class="cct-lbl">Ambient Temp</span>
+              <span class="cct-val" id="mumbaiTemp">29°C</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Humidity</span>
+              <span class="cct-val" id="mumbaiHum">76%</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Wind Vector</span>
+              <span class="cct-val" id="mumbaiWind">15 km/h SW</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Visibility</span>
+              <span class="cct-val" id="mumbaiVis">3.5 km</span>
+            </div>
+          </div>
+          <a href="chat.html" class="cc-query-link">Query Mumbai Coastal Forecast in Chat &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Zone 02: Gangetic Plains Hydrology — Varanasi -->
+      <article class="climate-card">
+        <div class="cc-media-wrap">
+          <img src="sources/varanasi_ghats.png" alt="Ganges Basin Hydrology Station" class="cc-img" />
+          <span class="cc-badge">Hydrology Sensor</span>
+          <span class="cc-coord">25° 18' N &middot; 82° 58' E</span>
+        </div>
+        <div class="cc-content">
+          <div class="cc-zone-tag">Northern Gangetic Plain</div>
+          <h3 class="cc-title">Ganga Basin River Hydrology & Winter Haze</h3>
+          <p class="cc-desc">
+            Surface runoff telemetry and morning radiation fog over the sacred Ganges basin. Integrates Central Water Commission river stage bulletins for flood alerts.
+          </p>
+          <div class="cc-telemetry-strip">
+            <div class="cct-item">
+              <span class="cct-lbl">Ambient Temp</span>
+              <span class="cct-val" id="varanasiTemp">31°C</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Humidity</span>
+              <span class="cct-val" id="varanasiHum">72%</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Wind Vector</span>
+              <span class="cct-val" id="varanasiWind">9 km/h E</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">River Stage</span>
+              <span class="cct-val" id="varanasiStage" style="color:#4ade80;">68.42m (Normal)</span>
+            </div>
+          </div>
+          <a href="chat.html" class="cc-query-link">Query Ganga Basin Telemetry in Chat &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Zone 03: Northeast Agro-Weather — Meghalaya Valley -->
+      <article class="climate-card">
+        <div class="cc-media-wrap">
+          <img src="sources/valley_fields.png" alt="Meghalaya Agro-Weather Station" class="cc-img" />
+          <span class="cc-badge agro">Agro-Met Station</span>
+          <span class="cc-coord">25° 34' N &middot; 91° 53' E</span>
+        </div>
+        <div class="cc-content">
+          <div class="cc-zone-tag">Northeast Highland Basin</div>
+          <h3 class="cc-title">Monsoon Cloud Inflow & Terrace Agro-Ecology</h3>
+          <p class="cc-desc">
+            High-altitude orographic precipitation tracking and soil moisture measurement across Meghalaya valley agriculture. Real-time advisories for terrace paddy.
+          </p>
+          <div class="cc-telemetry-strip">
+            <div class="cct-item">
+              <span class="cct-lbl">Valley Temp</span>
+              <span class="cct-val" id="meghalayaTemp">21°C</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Humidity</span>
+              <span class="cct-val" id="meghalayaHum">86%</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Precip Rate</span>
+              <span class="cct-val" id="meghalayaRain">4.2 mm/h</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Agro Soil</span>
+              <span class="cct-val" id="meghalayaSoil" style="color:#38bdf8;">Optimal (58%)</span>
+            </div>
+          </div>
+          <a href="chat.html" class="cc-query-link">Query Agro-Weather Advisory in Chat &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Zone 04: Sub-Himalayan Cloudy Foothills -->
+      <article class="climate-card">
+        <div class="cc-media-wrap">
+          <img src="sources/cloudy_hills.png" alt="Sub-Himalayan Hill Station" class="cc-img" />
+          <span class="cc-badge">Mountain Microclimate</span>
+          <span class="cc-coord">31° 06' N &middot; 77° 10' E</span>
+        </div>
+        <div class="cc-content">
+          <div class="cc-zone-tag">Sub-Himalayan Foothills</div>
+          <h3 class="cc-title">Valley Wind Shear & Orographic Clouds</h3>
+          <p class="cc-desc">
+            Mountain pass visibility monitoring, cold wave onset alerts, and highway pass conditions along critical northern transit corridors.
+          </p>
+          <div class="cc-telemetry-strip">
+            <div class="cct-item">
+              <span class="cct-lbl">Highland Temp</span>
+              <span class="cct-val" id="shimlaTemp">14°C</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Humidity</span>
+              <span class="cct-val" id="shimlaHum">64%</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Wind Vector</span>
+              <span class="cct-val" id="shimlaWind">18 km/h N</span>
+            </div>
+            <div class="cct-item">
+              <span class="cct-lbl">Windchill</span>
+              <span class="cct-val" id="shimlaApparent" style="color:#93c5fd;">11°C</span>
+            </div>
+          </div>
+          <a href="chat.html" class="cc-query-link">Query Mountain Pass Weather in Chat &rarr;</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       ROUTE CODE SECTION — "CPT – WFR" style
+       ==========================================================
+       Full-bleed image with MASSIVE translucent route-code text
+       overlaid. For WeatherGPT: "DEL — MUM" (Delhi to Mumbai,
+       representing IMD's most-tracked corridor).
+       Background: storm/monsoon cloud photo.
+       ========================================================= -->
+  <section class="route-section" id="routeSection">
+    <!-- Cinematic Monsoon Landscape Video Background from sources/ -->
+    <video autoplay muted loop playsinline class="route-bg-video" aria-hidden="true">
+      <source src="sources/monsoon_landscape.mov" type="video/mp4" />
+      <source src="sources/weather_drone_4k.mov" type="video/mp4" />
+    </video>
+    <div class="route-overlay" aria-hidden="true"></div>
+
+    <!-- Route code in massive Bebas Neue — Kashmir to Kanyakumari -->
+    <div class="route-giant">KASHMIR &mdash; KANYAKUMARI</div>
+
+    <!-- Small descriptor in the center overlay area -->
+    <div class="route-label">
+      <span class="route-label-from">
+        <em>Northern Frontier &middot; 34° 05' N</em>
+        <strong>KASHMIR &middot; PIR PANJAL OBSERVATORY</strong>
+      </span>
+      <span class="route-label-to">
+        <em>Southern Meridian &middot; 8° 04' N</em>
+        <strong>KANYAKUMARI &middot; INDIAN OCEAN CONVERGENCE</strong>
+      </span>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       MODES ARCHITECTURE & CORE PROBLEM / USP SHOWCASE
+       "From Weather Information to Weather Decisions"
+       ========================================================= -->
+  <section class="section modes-usp-section" id="modes">
+    <!-- Anchor fallback for existing use-cases links -->
+    <div id="use-cases" style="position: absolute; top: -60px;"></div>
+
+    <div class="modes-usp-header">
+      <div class="section-eyebrow">The Core Problem & Breakthrough Solution</div>
+      <h2 class="section-headline">From Weather Information<br/><span class="text-gradient">To Weather Decisions.</span></h2>
+      <p class="section-subheadline">
+        Weather data is fragmented across dozens of portals—radars, satellites, river gauges, and ocean models. 
+        Traditional apps simply dump passive forecasts like <em>"18°C, 70% rain"</em>. 
+        <strong>WeatherGPT understands what you are trying to do</strong> and orchestrates real-time meteorological tools into actionable domain advice.
+      </p>
+    </div>
+
+    <!-- The Philosophical Contrast Hook -->
+    <div class="usp-quote-banner">
+      <div class="usp-quote-icon">💡</div>
+      <div class="usp-quote-body">
+        <blockquote class="usp-quote-text">
+          “ChatGPT tells you the weather.<br/>
+          <span>WeatherGPT tells you what the weather means for what you are trying to do.</span>”
+        </blockquote>
+        <div class="usp-quote-attribution">
+          The Fundamental Paradigm Shift &middot; SIH Problem Statement #SIH26068
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Demonstration Contrast Card (Normal Weather App vs WeatherGPT Travel Mode) -->
+    <div class="contrast-container">
+      <!-- Left: Typical Generic Weather App -->
+      <div class="contrast-card contrast-card-legacy">
+        <div class="cc-badge legacy-badge">
+          <span class="cc-badge-icon">❌</span> Standard Weather App
+        </div>
+        <div class="cc-situation">Scenario: Driving Delhi to Manali at 6:00 AM</div>
+        <div class="cc-metric-display">
+          <div class="cc-temp">18°C</div>
+          <div class="cc-condition">Overcast with 70% Rain</div>
+          <div class="cc-submetric">Wind: 14 km/h &bull; Humidity: 86% &bull; Barometer: 1011 hPa</div>
+        </div>
+        <div class="cc-critique">
+          <div class="cc-critique-label">The Problem:</div>
+          <p>
+            Raw metrics with zero context. Does the rain cause flash floods on NH-21? 
+            Will mountain passes have zero visibility? When should you depart? 
+            <strong>The driver has to manually guess, Google road blogs, and gamble their safety.</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: WeatherGPT Context-Aware Travel Intelligence -->
+      <div class="contrast-card contrast-card-weathergpt">
+        <div class="cc-badge wgpt-badge">
+          <span class="cc-badge-icon">✨</span> WeatherGPT &middot; Travel Mode
+        </div>
+        <div class="cc-situation">Context: Route Risk & Departure Optimization</div>
+        <div class="cc-verdict-box">
+          <div class="cc-verdict-tag">RECOMMENDED ACTION: DELAY DEPARTURE 75 MIN</div>
+          <p class="cc-verdict-text">
+            “You are departing Delhi at 6:00 AM. Ingested IMD Patiala Doppler radar indicates <strong>torrential rain peaks on NH-21 between Bilaspur and Mandi from 10:45 AM to 1:15 PM</strong>. 
+            Visibility drops below 800m near Pandoh Dam with elevated hydroplane and boulder fall risks.
+            <br/><br/>
+            <strong>Action:</strong> Reschedule departure to <strong>7:15 AM</strong> to arrive at the ghat section post-storm, or divert via the Kiratpur-Nerchowk bypass.”
+          </p>
+        </div>
+        <div class="cc-orchestrated-tags">
+          <span class="cc-otag">📡 IMD Doppler Radar Patiala</span>
+          <span class="cc-otag">🛣️ NHAI Sensor Telemetry</span>
+          <span class="cc-otag">🌊 CWC Basin Hydrology</span>
+          <span class="cc-otag">🧭 Turn-by-turn Hazard Timeline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modes Architecture Grid: Different Data + Different Reasoning + Different Outputs -->
+    <div class="modes-architecture-wrap">
+      <div class="ma-intro">
+        <h3 class="ma-title">The Modes Architecture: More Than Personas</h3>
+        <p class="ma-sub">
+          WeatherGPT doesn't just change chatbot tone—each mode runs a distinct analytical pipeline:
+          <span class="highlight">Different Data Sources + Different Reasoning Models + Different Actionable Outputs</span>.
+        </p>
+      </div>
+
+      <div class="modes-grid">
+        <!-- MODE 1: TRAVEL -->
+        <div class="mode-card" id="mode-travel-card">
+          <div class="mc-header">
+            <div class="mc-icon">🚗</div>
+            <div>
+              <div class="mc-mode-name">TRAVEL MODE</div>
+              <div class="mc-mode-role">Route Hazards & Road Safety</div>
+            </div>
+            <a href="chat.html?mode=travel" class="mc-try-link" title="Launch Travel Mode in Chat">Try &rarr;</a>
+          </div>
+          <div class="mc-pills-flow">
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">1. Ingested Data</span>
+              <span class="mc-pill-val">Highway radars, road surface temp, fog sensors, mountain pass cams</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">2. Domain Reasoning</span>
+              <span class="mc-pill-val">Hydroplane probability, ghat landslide index, departure window optimization</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">3. Actionable Output</span>
+              <span class="mc-pill-val">Turn-by-turn hazard timeline, departure shift advice, bypass corridor maps</span>
+            </div>
+          </div>
+          <div class="mc-sample-prompt">
+            <strong>Sample Prompt:</strong> "Driving Delhi to Manali tomorrow at 6 AM. What are the ghat weather risks?"
+          </div>
+        </div>
+
+        <!-- MODE 2: FARMER -->
+        <div class="mode-card" id="mode-farmer-card">
+          <div class="mc-header">
+            <div class="mc-icon">🌾</div>
+            <div>
+              <div class="mc-mode-name">FARMER MODE</div>
+              <div class="mc-mode-role">Agro-Meteorological Advisory</div>
+            </div>
+            <a href="chat.html?mode=farmer" class="mc-try-link" title="Launch Farmer Mode in Chat">Try &rarr;</a>
+          </div>
+          <div class="mc-pills-flow">
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">1. Ingested Data</span>
+              <span class="mc-pill-val">0-100cm soil moisture, ET0 evapotranspiration, IMD AWS rain timing, frost onset</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">2. Domain Reasoning</span>
+              <span class="mc-pill-val">Pesticide wash-off risk (&lt;3hr rain), fungal blast thresholds, root zone saturation</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">3. Actionable Output</span>
+              <span class="mc-pill-val">48h spray windows, precision irrigation liters, frost cover alerts in Hindi & Telugu</span>
+            </div>
+          </div>
+          <div class="mc-sample-prompt">
+            <strong>Sample Prompt:</strong> "Is it safe to spray fungicide on wheat in Punjab this Friday?"
+          </div>
+        </div>
+
+        <!-- MODE 3: MARINE -->
+        <div class="mode-card" id="mode-marine-card">
+          <div class="mc-header">
+            <div class="mc-icon">⚓</div>
+            <div>
+              <div class="mc-mode-name">MARINE MODE</div>
+              <div class="mc-mode-role">Coastal, Fisheries & Port Operations</div>
+            </div>
+            <a href="chat.html?mode=marine" class="mc-try-link" title="Launch Marine Mode in Chat">Try &rarr;</a>
+          </div>
+          <div class="mc-pills-flow">
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">1. Ingested Data</span>
+              <span class="mc-pill-val">INCOIS wave buoys, tidal harmonics, coastal wind barbs, swell period & direction</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">2. Domain Reasoning</span>
+              <span class="mc-pill-val">Capsize threshold for artisanal crafts (&lt;15m), storm surge inundation, harbor clearance</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">3. Actionable Output</span>
+              <span class="mc-pill-val">Fishermen sea-entry clearance, vessel docking windows, high swell warnings</span>
+            </div>
+          </div>
+          <div class="mc-sample-prompt">
+            <strong>Sample Prompt:</strong> "Can artisanal fishing boats safely venture off Vizag coast tonight?"
+          </div>
+        </div>
+
+        <!-- MODE 4: DISASTER & CRISIS -->
+        <div class="mode-card" id="mode-disaster-card">
+          <div class="mc-header">
+            <div class="mc-icon">🚨</div>
+            <div>
+              <div class="mc-mode-name">DISASTER ALERTS</div>
+              <div class="mc-mode-role">Early Warning & Evacuation Intel</div>
+            </div>
+            <a href="chat.html?mode=alert" class="mc-try-link" title="Launch Alert Mode in Chat">Try &rarr;</a>
+          </div>
+          <div class="mc-pills-flow">
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">1. Ingested Data</span>
+              <span class="mc-pill-val">MOSDAC INSAT cloud-tops, CWC river basin levels, urban drainage, cyclone tracks</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">2. Domain Reasoning</span>
+              <span class="mc-pill-val">Flash flood time-to-peak, surge inundation contour, critical evacuation bottlenecks</span>
+            </div>
+            <div class="mc-pill-group">
+              <span class="mc-pill-label">3. Actionable Output</span>
+              <span class="mc-pill-val">Color-coded ward evacuation alerts, safe shelter routing, NDRF staging triggers</span>
+            </div>
+          </div>
+          <div class="mc-sample-prompt">
+            <strong>Sample Prompt:</strong> "Track Cyclone Remal storm surge risk for low-lying coastal wards"
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Really Powerful Part: Automatic Data Orchestration Bar -->
+    <div class="orchestration-strip">
+      <div class="orch-label">
+        <span class="orch-badge">THE POWER ENGINE</span>
+        <h4>Automatic Multi-Source Data Orchestration</h4>
+        <p>WeatherGPT's semantic context router determines which national telemetry feeds to query simultaneously:</p>
+      </div>
+      <div class="orch-badges-grid">
+        <div class="orch-item">
+          <span class="oi-num">4,000+</span>
+          <span class="oi-title">IMD AWS Stations</span>
+          <span class="oi-sub">Surface pressure, temp, wind</span>
+        </div>
+        <div class="orch-item">
+          <span class="oi-num">39</span>
+          <span class="oi-title">Doppler Weather Radars</span>
+          <span class="oi-sub">Precipitation nowcasting & velocity</span>
+        </div>
+        <div class="orch-item">
+          <span class="oi-num">CWC</span>
+          <span class="oi-title">River Gauging Network</span>
+          <span class="oi-sub">Basin water levels & discharge</span>
+        </div>
+        <div class="orch-item">
+          <span class="oi-num">INCOIS</span>
+          <span class="oi-title">Ocean State Forecast</span>
+          <span class="oi-sub">Wave height, swells & storm surge</span>
+        </div>
+        <div class="orch-item">
+          <span class="oi-num">ISRO</span>
+          <span class="oi-title">MOSDAC & INSAT-3DR</span>
+          <span class="oi-sub">Visible, IR & water vapor imaging</span>
+        </div>
+        <div class="orch-item">
+          <span class="oi-num">NWP</span>
+          <span class="oi-title">Open-Meteo & ECMWF</span>
+          <span class="oi-sub">High-resolution ensemble models</span>
+        </div>
+      </div>
+      <div class="orch-cta-row">
+        <a href="chat.html" class="orch-btn">
+          Test Live Decision Orchestration in Chat
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       CTA — Full-width cinematic closer
+       ========================================================= -->
+  <section class="cta-section" id="about">
+    <div class="cta-bg" aria-hidden="true"></div>
+    <div class="cta-content">
+      <div class="section-eyebrow" style="color:rgba(255,255,255,0.5)">SIH 2026 · MoES Challenge</div>
+      <h2 class="cta-headline">Ready to talk<br/>weather?</h2>
+      <a href="chat.html" class="cta-btn" id="ctaLaunch">
+        Launch WeatherGPT
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       FOOTER — Minimal
+       ========================================================= -->
+  <footer class="footer">
+    <div class="footer-row">
+      <span class="footer-logo">WEATHERGPT</span>
+      <span class="footer-copy">© 2026 · SIH Problem #SIH26068 · Ministry of Earth Sciences</span>
+      <div class="footer-links">
+        <a href="chat.html" id="footerChat">Chat</a>
+        <a href="#features" id="footerFeatures">Features</a>
+        <a href="https://github.com" target="_blank" rel="noopener" id="footerGithub">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ==========================================================
+       VIDEO DEMO MODAL
+       Triggered by "Watch Demo" button
+       ========================================================= -->
+  <div class="modal-overlay" id="demoModal" role="dialog" aria-label="Watch Demo" aria-modal="true" aria-hidden="true">
+    <div class="modal-inner">
+      <div class="modal-top-bar">
+        <div class="modal-tabs">
+          <button class="modal-tab active" id="modalTabDrone" data-src="sources/weather_drone_4k.mov">
+            🚁 4K Drone Telemetry
+          </button>
+          <button class="modal-tab" id="modalTabMonsoon" data-src="sources/monsoon_landscape.mov">
+            🌧️ Monsoon Valley Dynamics
+          </button>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-video-wrap">
+        <video
+          id="demoVideo"
+          controls
+          autoplay
+          playsinline
+          style="width:100%;height:100%;object-fit:contain;background:#000;"
+        >
+          <source src="sources/weather_drone_4k.mov" type="video/mp4" />
+        </video>
+      </div>
+      <p class="modal-caption" id="modalCaption">WeatherGPT — High-Altitude Atmospheric Drone Scan · 4K UHD 60fps · SIH 2026</p>
+    </div>
+  </div>
+
+  <script src="scripts/landing.js"></script>
+</body>
+</html>

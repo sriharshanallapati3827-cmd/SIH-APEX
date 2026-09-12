@@ -1,0 +1,32 @@
+from fastapi import FastAPI
+from dotenv import load_dotenv
+
+# Load environment variables before starting app
+load_dotenv()
+
+from routes.weather import router as weather_router
+from routes.forecast import router as forecast_router
+from routes.alerts import router as alerts_router
+from routes.ai import router as ai_router
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="WeatherGPT", version="1.0.0")
+
+# Enable CORS for frontend website
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(weather_router)
+app.include_router(forecast_router)
+app.include_router(alerts_router)
+app.include_router(ai_router)
+
+@app.get("/")
+def home():
+    return {"message": "Welcome to WeatherGPT"}

@@ -1,0 +1,20 @@
+# Environment / secrets — NEVER commit these
+.env
+backend/.env
+*.env
+
+# Large media files (>50MB, use external hosting instead)
+sources/*.mov
+sources/*.mp4
+.DS_Store
+sources/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.log
+
+# Node
+node_modules/

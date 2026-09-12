@@ -1,0 +1,40 @@
+# ==============================================================================
+# WeatherGPT — Multi-Service Docker Compose Setup
+# Starts both the FastAPI Backend and the Frontend Web Server
+# ==============================================================================
+version: '3.8'
+
+services:
+  # ── Python FastAPI Backend Service ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weathergpt-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=8000
+    networks:
+      - weathergpt-net
+
+  # ── Static Web Frontend Service ──
+  frontend:
+    image: nginx:alpine
+    container_name: weathergpt-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - weathergpt-net
+
+networks:
+  weathergpt-net:
+    driver: bridge

@@ -1,0 +1,64 @@
+# ==============================================================================
+# WeatherGPT — Kubernetes Deployment Manifest
+# Supports Horizontal Pod Autoscaling (HPA) during Cyclone & Disaster Spikes
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weathergpt-backend
+  labels:
+    app: weathergpt
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weathergpt
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: weathergpt
+        tier: backend
+    spec:
+      containers:
+      - name: api
+        image: weathergpt-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: weathergpt-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weathergpt-backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: weathergpt
+    tier: backend
+  ports:
+  - port: 80
+    targetPort: 8000
