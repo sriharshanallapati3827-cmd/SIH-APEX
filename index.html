@@ -279,491 +279,670 @@
   </section>
 
 
+
   <!-- ==========================================================
-       WHITE EDITORIAL SECTION — "TO THE END OF THE EARTH" style
-       ==========================================================
-       Light background section with coordinates on both sides
-       and a serif headline — exactly like White Desert's
-       transition section before the dark map.
+       INDIA STORY — White Desert-Style Horizontal Accordion
+       6 cinematic climate panels that expand on hover.
+       Inspired by whitedesert.com panel navigation.
        ========================================================= -->
-  <section class="coords-section" id="coordsSection">
-    <!-- Left coordinate — origin point (Kashmir / Srinagar) -->
-    <div class="coord-block coord-left">
-      <div class="coord-deg">34° 05' N  74° 47' E</div>
-      <div class="coord-name">Kashmir (Srinagar)</div>
+  <section class="india-story" id="indiaStory" aria-label="India Weather Story">
+
+    <!-- Header above the panels -->
+    <div class="india-story__header">
+      <div class="india-story__eyebrow">34° N — 8° N</div>
+      <h2 class="india-story__title">One Nation.<br/>Six Climates.</h2>
+      <p class="india-story__sub">Scroll or hover to explore India's weather extremes — WeatherGPT reads them all in real time.</p>
     </div>
 
-    <!-- Center editorial headline -->
-    <div class="coord-center">
-      <h2 class="coord-headline">From Kashmir<br/>to Kanyakumari</h2>
-      <p class="coord-body">
-        WeatherGPT ingests live feeds from 4,000+ IMD observation stations,
-        satellite products, and NWP models — then distils it into
-        plain-language answers in under 2 seconds.
-      </p>
-    </div>
+    <!-- Accordion panels -->
+    <div class="india-panels" id="indiaPanels" role="list">
 
-    <!-- Right coordinate — Kanyakumari (southernmost point of India) -->
-    <div class="coord-block coord-right">
-      <div class="coord-deg">8° 04' N  77° 33' E</div>
-      <div class="coord-name">Kanyakumari</div>
-    </div>
-  </section>
-  <!-- ==========================================================
-       INDIAN REGIONAL WEATHER & OBSERVATION SHOWCASE
-       Featuring real high-res observation captures from sources/
-       ========================================================== -->
-  <section class="section climates-section" id="climates">
-    <div class="climates-header">
-      <div class="section-eyebrow">Real-Time Indian Microclimates</div>
-      <div class="climates-title-row">
-        <h2 class="section-headline">Across 4 Climatic Frontiers</h2>
-        <div class="climates-sync-bar">
-          <span class="climates-sync-pill" id="climatesSyncPill">
-            <span class="live-sync-dot"></span>
-            <span id="climatesSyncText">Live IMD/AWS Feed · Active</span>
-          </span>
-          <button class="climates-refresh-btn" id="btnRefreshClimates" title="Fetch live meteorological telemetry for all 4 zones">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/></svg>
-            Sync Live
-          </button>
+      <!-- Panel 1: Kashmir -->
+      <div class="india-panel" data-panel="1" role="listitem" tabindex="0" aria-label="Kashmir — Snow & Ice">
+        <div class="india-panel__bg" style="background-image:url('sources/india_kashmir.jpg')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">01</span>
+          <span class="india-panel__name-vert">KASHMIR</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">34° 05' N &middot; 74° 47' E</div>
+          <div class="india-panel__climate-tag">❄️ Sub-Alpine Snow</div>
+          <h3 class="india-panel__place">Kashmir</h3>
+          <p class="india-panel__desc">Dal Lake freezes. The Pir Panjal range disappears under 3 metres of snow. Temperature: <strong>−12°C</strong> in January. WeatherGPT alerts avalanche corridors and mountain highway closures in real time.</p>
+          <div class="india-panel__stats">
+            <span><strong>−12°C</strong><small>Jan Low</small></span>
+            <span><strong>3m+</strong><small>Snowfall</small></span>
+            <span><strong>Orange</strong><small>IMD Alert</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
         </div>
       </div>
-      <p class="climates-sub">
-        India spans diverse Köppen climate regimes — from coastal Arabian Sea marine inversion layers to Gangetic hydrology and Northeast monsoon cloudbursts.
-      </p>
+
+      <!-- Panel 2: Rajasthan -->
+      <div class="india-panel" data-panel="2" role="listitem" tabindex="0" aria-label="Rajasthan — Desert Heat">
+        <div class="india-panel__bg" style="background-image:url('sources/india_rajasthan.jpg')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">02</span>
+          <span class="india-panel__name-vert">RAJASTHAN</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">26° 54' N &middot; 70° 54' E</div>
+          <div class="india-panel__climate-tag">🔥 Thar Desert</div>
+          <h3 class="india-panel__place">Rajasthan</h3>
+          <p class="india-panel__desc">The Thar Desert reaches <strong>50°C</strong> surface temperatures. Dust storms erase visibility to 200m. WeatherGPT tracks loo winds, dust vortices, and safe camel route windows for travelers.</p>
+          <div class="india-panel__stats">
+            <span><strong>50°C</strong><small>Peak Heat</small></span>
+            <span><strong>&lt;100mm</strong><small>Annual Rain</small></span>
+            <span><strong>Loo Winds</strong><small>60 km/h</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
+        </div>
+      </div>
+
+      <!-- Panel 3: Mumbai -->
+      <div class="india-panel india-panel--active" data-panel="3" role="listitem" tabindex="0" aria-label="Mumbai — Monsoon Coast">
+        <div class="india-panel__bg" style="background-image:url('sources/india_mumbai.jpg')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">03</span>
+          <span class="india-panel__name-vert">MUMBAI</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">18° 58' N &middot; 72° 49' E</div>
+          <div class="india-panel__climate-tag">🌊 Arabian Sea Monsoon</div>
+          <h3 class="india-panel__place">Mumbai</h3>
+          <p class="india-panel__desc">Marine Drive submerges. <strong>3,000mm</strong> of rain in 4 months. High-tide warnings turn Marine Drive into a sea wall. WeatherGPT gives real-time inundation risk and IMD red-alert tracking for coastal corridors.</p>
+          <div class="india-panel__stats">
+            <span><strong>3,000mm</strong><small>Monsoon Rain</small></span>
+            <span><strong>4.5m</strong><small>Wave Height</small></span>
+            <span><strong>Red Alert</strong><small>IMD Status</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
+        </div>
+      </div>
+
+      <!-- Panel 4: Varanasi -->
+      <div class="india-panel" data-panel="4" role="listitem" tabindex="0" aria-label="Varanasi — Gangetic Plains">
+        <div class="india-panel__bg" style="background-image:url('sources/india_varanasi.jpg')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">04</span>
+          <span class="india-panel__name-vert">VARANASI</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">25° 19' N &middot; 82° 58' E</div>
+          <div class="india-panel__climate-tag">🌫️ Gangetic Haze</div>
+          <h3 class="india-panel__place">Varanasi</h3>
+          <p class="india-panel__desc">Morning fog reduces Ganga visibility to zero. The Ganges swells <strong>8m</strong> above normal during Himalayan melt. WeatherGPT tracks CWC river gauge levels and flood embankment breach risk for farmers on the plains.</p>
+          <div class="india-panel__stats">
+            <span><strong>+8m</strong><small>Flood Rise</small></span>
+            <span><strong>42°C</strong><small>Summer Peak</small></span>
+            <span><strong>AQI 300+</strong><small>Winter Haze</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
+        </div>
+      </div>
+
+      <!-- Panel 5: Meghalaya -->
+      <div class="india-panel" data-panel="5" role="listitem" tabindex="0" aria-label="Meghalaya — Wettest Place on Earth">
+        <div class="india-panel__bg" style="background-image:url('sources/cloudy_hills.png')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">05</span>
+          <span class="india-panel__name-vert">MEGHALAYA</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">25° 34' N &middot; 91° 53' E</div>
+          <div class="india-panel__climate-tag">🌧️ World's Wettest</div>
+          <h3 class="india-panel__place">Meghalaya</h3>
+          <p class="india-panel__desc">Mawsynram receives <strong>11,871mm</strong> per year — the wettest place on Earth. Clouds live below the hilltops. Rivers form in minutes. WeatherGPT monitors flash flood triggers and landslide risk for Northeast corridor routes.</p>
+          <div class="india-panel__stats">
+            <span><strong>11,871mm</strong><small>Annual Rain</small></span>
+            <span><strong>100%</strong><small>Cloud Cover</small></span>
+            <span><strong>Flash Flood</strong><small>Alert Risk</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
+        </div>
+      </div>
+
+      <!-- Panel 6: Kanyakumari -->
+      <div class="india-panel" data-panel="6" role="listitem" tabindex="0" aria-label="Kanyakumari — Tropical South">
+        <div class="india-panel__bg" style="background-image:url('sources/india_kanyakumari.jpg')"></div>
+        <div class="india-panel__overlay"></div>
+        <div class="india-panel__collapsed-label">
+          <span class="india-panel__num">06</span>
+          <span class="india-panel__name-vert">KANYAKUMARI</span>
+        </div>
+        <div class="india-panel__content">
+          <div class="india-panel__coords">8° 04' N &middot; 77° 33' E</div>
+          <div class="india-panel__climate-tag">🌅 Three-Ocean Confluence</div>
+          <h3 class="india-panel__place">Kanyakumari</h3>
+          <p class="india-panel__desc">Where the Arabian Sea, Bay of Bengal, and Indian Ocean converge. Cyclone landfall risk peaks here. WeatherGPT integrates INCOIS wave models and IMD cyclone tracks with real-time evacuation corridor advisories.</p>
+          <div class="india-panel__stats">
+            <span><strong>3 Oceans</strong><small>Meet Here</small></span>
+            <span><strong>30°C</strong><small>Year-Round</small></span>
+            <span><strong>Cyclone</strong><small>Vulnerability</small></span>
+          </div>
+          <a href="chat.html" class="india-panel__cta">Ask WeatherGPT →</a>
+        </div>
+      </div>
+
+    </div><!-- /.india-panels -->
+
+    <!-- Bottom scroll hint -->
+    <div class="india-story__hint" aria-hidden="true">
+      <span>Hover a panel to explore</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </div>
 
-    <!-- 2x2 Editorial Regional Climate Grid -->
-    <div class="climates-grid">
-
-      <!-- Zone 01: Arabian Sea & Mumbai Coastal Mist -->
-      <article class="climate-card">
-        <div class="cc-media-wrap">
-          <img src="sources/mumbai_sea_link.png" alt="Mumbai Arabian Sea Marine Layer" class="cc-img" />
-          <span class="cc-badge live">Live Coastal Telemetry</span>
-          <span class="cc-coord">18° 58' N &middot; 72° 49' E</span>
-        </div>
-        <div class="cc-content">
-          <div class="cc-zone-tag">Western Marine Frontier</div>
-          <h3 class="cc-title">Arabian Sea Coastal Mist & Marine Inversion</h3>
-          <p class="cc-desc">
-            Early morning sea-breeze moisture convergence over the Bandra-Worli corridor. Continuous tracking of maritime boundary layers and coastal humidity surges.
-          </p>
-          <div class="cc-telemetry-strip">
-            <div class="cct-item">
-              <span class="cct-lbl">Ambient Temp</span>
-              <span class="cct-val" id="mumbaiTemp">29°C</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Humidity</span>
-              <span class="cct-val" id="mumbaiHum">76%</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Wind Vector</span>
-              <span class="cct-val" id="mumbaiWind">15 km/h SW</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Visibility</span>
-              <span class="cct-val" id="mumbaiVis">3.5 km</span>
-            </div>
-          </div>
-          <a href="chat.html" class="cc-query-link">Query Mumbai Coastal Forecast in Chat &rarr;</a>
-        </div>
-      </article>
-
-      <!-- Zone 02: Gangetic Plains Hydrology — Varanasi -->
-      <article class="climate-card">
-        <div class="cc-media-wrap">
-          <img src="sources/varanasi_ghats.png" alt="Ganges Basin Hydrology Station" class="cc-img" />
-          <span class="cc-badge">Hydrology Sensor</span>
-          <span class="cc-coord">25° 18' N &middot; 82° 58' E</span>
-        </div>
-        <div class="cc-content">
-          <div class="cc-zone-tag">Northern Gangetic Plain</div>
-          <h3 class="cc-title">Ganga Basin River Hydrology & Winter Haze</h3>
-          <p class="cc-desc">
-            Surface runoff telemetry and morning radiation fog over the sacred Ganges basin. Integrates Central Water Commission river stage bulletins for flood alerts.
-          </p>
-          <div class="cc-telemetry-strip">
-            <div class="cct-item">
-              <span class="cct-lbl">Ambient Temp</span>
-              <span class="cct-val" id="varanasiTemp">31°C</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Humidity</span>
-              <span class="cct-val" id="varanasiHum">72%</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Wind Vector</span>
-              <span class="cct-val" id="varanasiWind">9 km/h E</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">River Stage</span>
-              <span class="cct-val" id="varanasiStage" style="color:#4ade80;">68.42m (Normal)</span>
-            </div>
-          </div>
-          <a href="chat.html" class="cc-query-link">Query Ganga Basin Telemetry in Chat &rarr;</a>
-        </div>
-      </article>
-
-      <!-- Zone 03: Northeast Agro-Weather — Meghalaya Valley -->
-      <article class="climate-card">
-        <div class="cc-media-wrap">
-          <img src="sources/valley_fields.png" alt="Meghalaya Agro-Weather Station" class="cc-img" />
-          <span class="cc-badge agro">Agro-Met Station</span>
-          <span class="cc-coord">25° 34' N &middot; 91° 53' E</span>
-        </div>
-        <div class="cc-content">
-          <div class="cc-zone-tag">Northeast Highland Basin</div>
-          <h3 class="cc-title">Monsoon Cloud Inflow & Terrace Agro-Ecology</h3>
-          <p class="cc-desc">
-            High-altitude orographic precipitation tracking and soil moisture measurement across Meghalaya valley agriculture. Real-time advisories for terrace paddy.
-          </p>
-          <div class="cc-telemetry-strip">
-            <div class="cct-item">
-              <span class="cct-lbl">Valley Temp</span>
-              <span class="cct-val" id="meghalayaTemp">21°C</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Humidity</span>
-              <span class="cct-val" id="meghalayaHum">86%</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Precip Rate</span>
-              <span class="cct-val" id="meghalayaRain">4.2 mm/h</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Agro Soil</span>
-              <span class="cct-val" id="meghalayaSoil" style="color:#38bdf8;">Optimal (58%)</span>
-            </div>
-          </div>
-          <a href="chat.html" class="cc-query-link">Query Agro-Weather Advisory in Chat &rarr;</a>
-        </div>
-      </article>
-
-      <!-- Zone 04: Sub-Himalayan Cloudy Foothills -->
-      <article class="climate-card">
-        <div class="cc-media-wrap">
-          <img src="sources/cloudy_hills.png" alt="Sub-Himalayan Hill Station" class="cc-img" />
-          <span class="cc-badge">Mountain Microclimate</span>
-          <span class="cc-coord">31° 06' N &middot; 77° 10' E</span>
-        </div>
-        <div class="cc-content">
-          <div class="cc-zone-tag">Sub-Himalayan Foothills</div>
-          <h3 class="cc-title">Valley Wind Shear & Orographic Clouds</h3>
-          <p class="cc-desc">
-            Mountain pass visibility monitoring, cold wave onset alerts, and highway pass conditions along critical northern transit corridors.
-          </p>
-          <div class="cc-telemetry-strip">
-            <div class="cct-item">
-              <span class="cct-lbl">Highland Temp</span>
-              <span class="cct-val" id="shimlaTemp">14°C</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Humidity</span>
-              <span class="cct-val" id="shimlaHum">64%</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Wind Vector</span>
-              <span class="cct-val" id="shimlaWind">18 km/h N</span>
-            </div>
-            <div class="cct-item">
-              <span class="cct-lbl">Windchill</span>
-              <span class="cct-val" id="shimlaApparent" style="color:#93c5fd;">11°C</span>
-            </div>
-          </div>
-          <a href="chat.html" class="cc-query-link">Query Mountain Pass Weather in Chat &rarr;</a>
-        </div>
-      </article>
-
-    </div>
   </section>
 
-
-  <!-- ==========================================================
-       ROUTE CODE SECTION — "CPT – WFR" style
-       ==========================================================
-       Full-bleed image with MASSIVE translucent route-code text
-       overlaid. For WeatherGPT: "DEL — MUM" (Delhi to Mumbai,
-       representing IMD's most-tracked corridor).
-       Background: storm/monsoon cloud photo.
-       ========================================================= -->
-  <section class="route-section" id="routeSection">
-    <!-- Cinematic Monsoon Landscape Video Background from sources/ -->
-    <video autoplay muted loop playsinline class="route-bg-video" aria-hidden="true">
-      <source src="sources/monsoon_landscape.mov" type="video/mp4" />
-      <source src="sources/weather_drone_4k.mov" type="video/mp4" />
-    </video>
-    <div class="route-overlay" aria-hidden="true"></div>
-
-    <!-- Route code in massive Bebas Neue — Kashmir to Kanyakumari -->
-    <div class="route-giant">KASHMIR &mdash; KANYAKUMARI</div>
-
-    <!-- Small descriptor in the center overlay area -->
-    <div class="route-label">
-      <span class="route-label-from">
-        <em>Northern Frontier &middot; 34° 05' N</em>
-        <strong>KASHMIR &middot; PIR PANJAL OBSERVATORY</strong>
-      </span>
-      <span class="route-label-to">
-        <em>Southern Meridian &middot; 8° 04' N</em>
-        <strong>KANYAKUMARI &middot; INDIAN OCEAN CONVERGENCE</strong>
-      </span>
-    </div>
-  </section>
 
 
   <!-- ==========================================================
        MODES ARCHITECTURE & CORE PROBLEM / USP SHOWCASE
        "From Weather Information to Weather Decisions"
        ========================================================= -->
+  <!-- ==========================================================
+       MODES ARCHITECTURE & CORE PROBLEM / USP SHOWCASE
+       "From Weather Information to Weather Decisions"
+       Editorial White Desert / High-End Design
+       ========================================================= -->
   <section class="section modes-usp-section" id="modes">
     <!-- Anchor fallback for existing use-cases links -->
     <div id="use-cases" style="position: absolute; top: -60px;"></div>
 
     <div class="modes-usp-header">
-      <div class="section-eyebrow">The Core Problem & Breakthrough Solution</div>
-      <h2 class="section-headline">From Weather Information<br/><span class="text-gradient">To Weather Decisions.</span></h2>
+      <div class="section-eyebrow">[ 02 // PARADIGM SHIFT ] &middot; THE ARCHITECTURAL DIFFERENCE</div>
+      <h2 class="section-headline">
+        From Weather Information<br/>
+        <span class="text-serif-italic">To Weather Decisions.</span>
+      </h2>
       <p class="section-subheadline">
-        Weather data is fragmented across dozens of portals—radars, satellites, river gauges, and ocean models. 
-        Traditional apps simply dump passive forecasts like <em>"18°C, 70% rain"</em>. 
-        <strong>WeatherGPT understands what you are trying to do</strong> and orchestrates real-time meteorological tools into actionable domain advice.
+        Weather telemetry is fragmented across disparate silos—radars, orbital imagers, river hydrology gauges, and ocean buoys. 
+        Traditional weather apps simply dump passive forecasts like <em>"18°C, 70% rain"</em>. 
+        <strong>WeatherGPT understands the human mission</strong>—synthesizing multi-modal atmospheric physics into immediate, operational directives.
       </p>
     </div>
 
-    <!-- The Philosophical Contrast Hook -->
+    <!-- The Philosophical Manifesto Quote (White Desert Editorial Style) -->
     <div class="usp-quote-banner">
-      <div class="usp-quote-icon">💡</div>
+      <div class="usp-quote-mark" aria-hidden="true">“</div>
       <div class="usp-quote-body">
         <blockquote class="usp-quote-text">
-          “ChatGPT tells you the weather.<br/>
-          <span>WeatherGPT tells you what the weather means for what you are trying to do.</span>”
+          ChatGPT tells you what the weather is.<br/>
+          <span>WeatherGPT tells you what the weather means for what you are trying to do.</span>
         </blockquote>
         <div class="usp-quote-attribution">
-          The Fundamental Paradigm Shift &middot; SIH Problem Statement #SIH26068
+          <span class="uqa-tag">PARADIGM SHIFT</span>
+          <span class="uqa-dot">&bull;</span>
+          <span>SIH PROBLEM STATEMENT #SIH26068</span>
+          <span class="uqa-dot">&bull;</span>
+          <span>AUTONOMOUS DOMAIN REASONING</span>
         </div>
       </div>
     </div>
 
-    <!-- Live Demonstration Contrast Card (Normal Weather App vs WeatherGPT Travel Mode) -->
+    <!-- Live Demonstration Contrast Card (Standard Weather App vs WeatherGPT Mission Console) -->
     <div class="contrast-container">
       <!-- Left: Typical Generic Weather App -->
       <div class="contrast-card contrast-card-legacy">
-        <div class="cc-badge legacy-badge">
-          <span class="cc-badge-icon">❌</span> Standard Weather App
+        <div class="cc-header">
+          <div class="cc-status-dot cc-dot-legacy"></div>
+          <span class="cc-type-label">LEGACY METEOROLOGY // PASSIVE DATA DUMP</span>
         </div>
-        <div class="cc-situation">Scenario: Driving Delhi to Manali at 6:00 AM</div>
-        <div class="cc-metric-display">
-          <div class="cc-temp">18°C</div>
-          <div class="cc-condition">Overcast with 70% Rain</div>
-          <div class="cc-submetric">Wind: 14 km/h &bull; Humidity: 86% &bull; Barometer: 1011 hPa</div>
+        <div class="cc-meta">
+          <span class="cc-label-italic">Operational Context:</span>
+          <span class="cc-val-bold">NH-21 Alpine Route &middot; 06:00 AM Departure</span>
+        </div>
+        <div class="cc-legacy-telemetry">
+          <div class="ccl-temp">18°C</div>
+          <div class="ccl-summary">Overcast &middot; 70% Precipitation</div>
+          <div class="ccl-barometer">Wind: 14 km/h &bull; Humidity: 86% &bull; Barometer: 1011 hPa</div>
         </div>
         <div class="cc-critique">
-          <div class="cc-critique-label">The Problem:</div>
+          <div class="cc-critique-label">[ DEFICIENCY ANALYSIS ]</div>
           <p>
-            Raw metrics with zero context. Does the rain cause flash floods on NH-21? 
-            Will mountain passes have zero visibility? When should you depart? 
-            <strong>The driver has to manually guess, Google road blogs, and gamble their safety.</strong>
+            Unstructured sensor outputs with zero contextual reasoning. Does the 70% rain trigger debris flow at Pandoh? Will the mountain pass experience sub-500m fog? 
+            <strong>The driver must manually cross-reference road blogs, hazard maps, and gamble transit safety.</strong>
           </p>
         </div>
       </div>
 
-      <!-- Right: WeatherGPT Context-Aware Travel Intelligence -->
+      <!-- Right: WeatherGPT Context-Aware Mission Directive -->
       <div class="contrast-card contrast-card-weathergpt">
-        <div class="cc-badge wgpt-badge">
-          <span class="cc-badge-icon">✨</span> WeatherGPT &middot; Travel Mode
+        <div class="cc-header">
+          <div class="cc-status-dot cc-dot-active"></div>
+          <span class="cc-type-label cc-type-active">WEATHERGPT REASONING CORE // REAL-TIME DISPATCH</span>
         </div>
-        <div class="cc-situation">Context: Route Risk & Departure Optimization</div>
+        <div class="cc-meta">
+          <span class="cc-label-italic">Target Objective:</span>
+          <span class="cc-val-bold">Route Hazard Synthesis &amp; Departure Optimization</span>
+        </div>
         <div class="cc-verdict-box">
-          <div class="cc-verdict-tag">RECOMMENDED ACTION: DELAY DEPARTURE 75 MIN</div>
+          <div class="cc-verdict-tag">
+            <span class="cc-vbadge-pulse"></span>
+            OPERATIONAL DIRECTIVE &middot; DEPARTURE DELAY +75 MIN RECOMMENDED
+          </div>
           <p class="cc-verdict-text">
-            “You are departing Delhi at 6:00 AM. Ingested IMD Patiala Doppler radar indicates <strong>torrential rain peaks on NH-21 between Bilaspur and Mandi from 10:45 AM to 1:15 PM</strong>. 
-            Visibility drops below 800m near Pandoh Dam with elevated hydroplane and boulder fall risks.
+            Ingested IMD Patiala Doppler radar detects a high-reflectivity cloudburst cell tracking across <strong>NH-21 between Bilaspur and Mandi from 10:45 AM to 1:15 PM</strong>. 
+            Road surface friction drops below 0.35 near Pandoh Dam with critical hydroplaning and rockfall probability.
             <br/><br/>
-            <strong>Action:</strong> Reschedule departure to <strong>7:15 AM</strong> to arrive at the ghat section post-storm, or divert via the Kiratpur-Nerchowk bypass.”
+            <strong>Actionable Directive:</strong> Reschedule departure to <strong>07:15 AM</strong> to clear the valley corridor post-storm, or divert via the Kiratpur-Nerchowk bypass.
           </p>
         </div>
         <div class="cc-orchestrated-tags">
-          <span class="cc-otag">📡 IMD Doppler Radar Patiala</span>
-          <span class="cc-otag">🛣️ NHAI Sensor Telemetry</span>
-          <span class="cc-otag">🌊 CWC Basin Hydrology</span>
-          <span class="cc-otag">🧭 Turn-by-turn Hazard Timeline</span>
+          <span class="cc-otag"><span class="cc-otag-dot"></span>IMD Doppler Radar (Patiala)</span>
+          <span class="cc-otag"><span class="cc-otag-dot"></span>NHAI Surface Friction RWIS</span>
+          <span class="cc-otag"><span class="cc-otag-dot"></span>CWC Beas River Gauge</span>
+          <span class="cc-otag"><span class="cc-otag-dot"></span>Ghat Slope Stability Model</span>
         </div>
       </div>
     </div>
 
-    <!-- Modes Architecture Grid: Different Data + Different Reasoning + Different Outputs -->
+    <!-- Modes Architecture: High-End Interactive Domain Intelligence Console -->
     <div class="modes-architecture-wrap">
       <div class="ma-intro">
+        <div class="section-eyebrow">[ DOMAIN REASONING ENGINES ]</div>
         <h3 class="ma-title">The Modes Architecture: More Than Personas</h3>
         <p class="ma-sub">
-          WeatherGPT doesn't just change chatbot tone—each mode runs a distinct analytical pipeline:
-          <span class="highlight">Different Data Sources + Different Reasoning Models + Different Actionable Outputs</span>.
+          WeatherGPT never merely alters chatbot tone. Each operational mode initializes a distinct analytical pipeline:
+          <span class="highlight">Proprietary Telemetry Ingestion &rarr; Specialized Domain Reasoning &rarr; Mission-Critical Action Directives</span>.
         </p>
       </div>
 
-      <div class="modes-grid">
-        <!-- MODE 1: TRAVEL -->
-        <div class="mode-card" id="mode-travel-card">
-          <div class="mc-header">
-            <div class="mc-icon">🚗</div>
-            <div>
-              <div class="mc-mode-name">TRAVEL MODE</div>
-              <div class="mc-mode-role">Route Hazards & Road Safety</div>
+      <!-- Mode Selector Tabs (White Desert Expedition Style) -->
+      <div class="mode-tabs-bar" role="tablist" aria-label="Select Intelligence Mode">
+        <button class="mode-tab active" data-mode="travel" role="tab" aria-selected="true">
+          <span class="mt-num">01</span>
+          <span class="mt-name">Travel &amp; Logistics</span>
+        </button>
+        <button class="mode-tab" data-mode="farmer" role="tab" aria-selected="false">
+          <span class="mt-num">02</span>
+          <span class="mt-name">Agro-Meteorology</span>
+        </button>
+        <button class="mode-tab" data-mode="marine" role="tab" aria-selected="false">
+          <span class="mt-num">03</span>
+          <span class="mt-name">Maritime &amp; Ports</span>
+        </button>
+        <button class="mode-tab" data-mode="disaster" role="tab" aria-selected="false">
+          <span class="mt-num">04</span>
+          <span class="mt-name">Disaster &amp; Crisis</span>
+        </button>
+      </div>
+
+      <!-- Interactive Dual-Pane Intelligence Console -->
+      <div class="mode-console" id="modeConsole">
+        <!-- MODE CONTENT PANELS (Switched via JS) -->
+        
+        <!-- Mode 1: Travel -->
+        <div class="mode-console-panel active" id="panel-travel">
+          <div class="mcp-left">
+            <div class="mcp-domain-tag">
+              <span class="mcp-coord">[ 31° 58' N, 77° 10' E ] &middot; ALPINE TRANSIT</span>
+              <span class="mcp-status-badge">ACTIVE TELEMETRY</span>
             </div>
-            <a href="chat.html?mode=travel" class="mc-try-link" title="Launch Travel Mode in Chat">Try &rarr;</a>
+            <h4 class="mcp-headline">Highway Hazard &amp; Pass Optimization</h4>
+            <div class="mcp-prompt-box">
+              <span class="mcp-prompt-label">SAMPLE USER INQUIRY</span>
+              <p class="mcp-prompt-text">“Driving Delhi to Manali tomorrow at 6:00 AM. What are the ghat weather hazards?”</p>
+            </div>
+            <div class="mcp-dispatch-box">
+              <span class="mcp-dispatch-label">SYNTHESIZED ACTION DIRECTIVE</span>
+              <p class="mcp-dispatch-text">
+                Patiala Doppler radar indicates cloudburst risk peaking on NH-21 between Bilaspur &amp; Mandi (10:45 AM - 1:15 PM). Hydroplane risk elevated near Pandoh Dam with active fog below 800m. <strong>Shift departure to 07:15 AM or route via Kiratpur bypass.</strong>
+              </p>
+            </div>
+            <div class="mcp-action-row">
+              <a href="chat.html?mode=travel" class="mcp-launch-btn">
+                Launch Travel Mode in Chat
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
           </div>
-          <div class="mc-pills-flow">
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">1. Ingested Data</span>
-              <span class="mc-pill-val">Highway radars, road surface temp, fog sensors, mountain pass cams</span>
+          <div class="mcp-right">
+            <div class="mcp-pipeline-title">[ 3-TIER ANALYTICAL PIPELINE ]</div>
+            <div class="mcp-flow">
+              <div class="mcp-step">
+                <div class="mcp-step-num">01</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Ingested Telemetry Feeds</span>
+                    <span class="mcp-step-badge">100Hz Stream</span>
+                  </div>
+                  <p class="mcp-step-desc">Highway Doppler radars, road surface temperature sensors, RWIS fog optical sensors, mountain pass webcam telemetry.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">02</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Domain Reasoning Engine</span>
+                    <span class="mcp-step-badge">Physics Inference</span>
+                  </div>
+                  <p class="mcp-step-desc">Hydroplane probability modeling, ghat landslide shear stress index, transit arrival window optimization algorithms.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">03</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Operational Output</span>
+                    <span class="mcp-step-badge">Direct Action</span>
+                  </div>
+                  <p class="mcp-step-desc">Turn-by-turn hazard timeline, departure shift advice, alternative bypass routing, live elevation freeze alerts.</p>
+                </div>
+              </div>
             </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">2. Domain Reasoning</span>
-              <span class="mc-pill-val">Hydroplane probability, ghat landslide index, departure window optimization</span>
-            </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">3. Actionable Output</span>
-              <span class="mc-pill-val">Turn-by-turn hazard timeline, departure shift advice, bypass corridor maps</span>
-            </div>
-          </div>
-          <div class="mc-sample-prompt">
-            <strong>Sample Prompt:</strong> "Driving Delhi to Manali tomorrow at 6 AM. What are the ghat weather risks?"
           </div>
         </div>
 
-        <!-- MODE 2: FARMER -->
-        <div class="mode-card" id="mode-farmer-card">
-          <div class="mc-header">
-            <div class="mc-icon">🌾</div>
-            <div>
-              <div class="mc-mode-name">FARMER MODE</div>
-              <div class="mc-mode-role">Agro-Meteorological Advisory</div>
+        <!-- Mode 2: Farmer -->
+        <div class="mode-console-panel" id="panel-farmer">
+          <div class="mcp-left">
+            <div class="mcp-domain-tag">
+              <span class="mcp-coord">[ 30° 54' N, 75° 51' E ] &middot; AGRO BASIN</span>
+              <span class="mcp-status-badge">SOIL &amp; CANOPY SENSORS</span>
             </div>
-            <a href="chat.html?mode=farmer" class="mc-try-link" title="Launch Farmer Mode in Chat">Try &rarr;</a>
+            <h4 class="mcp-headline">Agro-Meteorological Precision Advisory</h4>
+            <div class="mcp-prompt-box">
+              <span class="mcp-prompt-label">SAMPLE USER INQUIRY</span>
+              <p class="mcp-prompt-text">“Is it safe to spray fungicide on wheat in Punjab this Friday?”</p>
+            </div>
+            <div class="mcp-dispatch-box">
+              <span class="mcp-dispatch-label">SYNTHESIZED ACTION DIRECTIVE</span>
+              <p class="mcp-dispatch-text">
+                IMD AWS rain timing predicts 4.2mm shower Friday at 3:00 PM (wash-off window &lt; 3 hrs). <strong>Postpone fungicide application to Saturday 7:00 AM</strong>, where canopy humidity stays below 65% for safe adhesion.
+              </p>
+            </div>
+            <div class="mcp-action-row">
+              <a href="chat.html?mode=farmer" class="mcp-launch-btn">
+                Launch Farmer Mode in Chat
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
           </div>
-          <div class="mc-pills-flow">
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">1. Ingested Data</span>
-              <span class="mc-pill-val">0-100cm soil moisture, ET0 evapotranspiration, IMD AWS rain timing, frost onset</span>
+          <div class="mcp-right">
+            <div class="mcp-pipeline-title">[ 3-TIER ANALYTICAL PIPELINE ]</div>
+            <div class="mcp-flow">
+              <div class="mcp-step">
+                <div class="mcp-step-num">01</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Ingested Telemetry Feeds</span>
+                    <span class="mcp-step-badge">Agro Telemetry</span>
+                  </div>
+                  <p class="mcp-step-desc">0-100cm soil moisture profiles, ET0 evapotranspiration rates, IMD AWS micro-precipitation, frost onset telemetry.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">02</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Domain Reasoning Engine</span>
+                    <span class="mcp-step-badge">Crop Agronomy</span>
+                  </div>
+                  <p class="mcp-step-desc">Pesticide wash-off thresholds (&lt;3h precipitation risk), fungal blast outbreak probability, root-zone saturation modeling.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">03</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Operational Output</span>
+                    <span class="mcp-step-badge">Multilingual Dispatch</span>
+                  </div>
+                  <p class="mcp-step-desc">48-hour spray window calendar, precision irrigation dosage (liters/hectare), frost blanket alerts in regional languages.</p>
+                </div>
+              </div>
             </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">2. Domain Reasoning</span>
-              <span class="mc-pill-val">Pesticide wash-off risk (&lt;3hr rain), fungal blast thresholds, root zone saturation</span>
-            </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">3. Actionable Output</span>
-              <span class="mc-pill-val">48h spray windows, precision irrigation liters, frost cover alerts in Hindi & Telugu</span>
-            </div>
-          </div>
-          <div class="mc-sample-prompt">
-            <strong>Sample Prompt:</strong> "Is it safe to spray fungicide on wheat in Punjab this Friday?"
           </div>
         </div>
 
-        <!-- MODE 3: MARINE -->
-        <div class="mode-card" id="mode-marine-card">
-          <div class="mc-header">
-            <div class="mc-icon">⚓</div>
-            <div>
-              <div class="mc-mode-name">MARINE MODE</div>
-              <div class="mc-mode-role">Coastal, Fisheries & Port Operations</div>
+        <!-- Mode 3: Marine -->
+        <div class="mode-console-panel" id="panel-marine">
+          <div class="mcp-left">
+            <div class="mcp-domain-tag">
+              <span class="mcp-coord">[ 17° 41' N, 83° 17' E ] &middot; BAY OF BENGAL</span>
+              <span class="mcp-status-badge">OCEAN BUOY HARMONICS</span>
             </div>
-            <a href="chat.html?mode=marine" class="mc-try-link" title="Launch Marine Mode in Chat">Try &rarr;</a>
+            <h4 class="mcp-headline">Coastal, Fisheries &amp; Port Operations</h4>
+            <div class="mcp-prompt-box">
+              <span class="mcp-prompt-label">SAMPLE USER INQUIRY</span>
+              <p class="mcp-prompt-text">“Can artisanal fishing crafts safely venture off Vizag coast tonight?”</p>
+            </div>
+            <div class="mcp-dispatch-box">
+              <span class="mcp-dispatch-label">SYNTHESIZED ACTION DIRECTIVE</span>
+              <p class="mcp-dispatch-text">
+                INCOIS ocean wave buoys record 3.8m significant wave height with 14-second swell periods. <strong>Capsize risk exceeds 91% for vessels under 15m.</strong> Issue RED advisory: delay harbour departure until 06:00 AM tide retreat.
+              </p>
+            </div>
+            <div class="mcp-action-row">
+              <a href="chat.html?mode=marine" class="mcp-launch-btn">
+                Launch Marine Mode in Chat
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
           </div>
-          <div class="mc-pills-flow">
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">1. Ingested Data</span>
-              <span class="mc-pill-val">INCOIS wave buoys, tidal harmonics, coastal wind barbs, swell period & direction</span>
+          <div class="mcp-right">
+            <div class="mcp-pipeline-title">[ 3-TIER ANALYTICAL PIPELINE ]</div>
+            <div class="mcp-flow">
+              <div class="mcp-step">
+                <div class="mcp-step-num">01</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Ingested Telemetry Feeds</span>
+                    <span class="mcp-step-badge">Ocean Buoys</span>
+                  </div>
+                  <p class="mcp-step-desc">INCOIS moored wave buoys, tidal harmonic gauges, coastal wind barbs, swell period and deep-water direction sensors.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">02</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Domain Reasoning Engine</span>
+                    <span class="mcp-step-badge">Hydrodynamics</span>
+                  </div>
+                  <p class="mcp-step-desc">Capsize threshold modeling for artisanal vessels (&lt;15m), storm surge coastal inundation profiles, harbour entrance clearance calculations.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">03</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Operational Output</span>
+                    <span class="mcp-step-badge">Safety Clearance</span>
+                  </div>
+                  <p class="mcp-step-desc">Fishermen sea-entry clearance, port vessel docking windows, coastal high-swell warnings with emergency mooring coordinates.</p>
+                </div>
+              </div>
             </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">2. Domain Reasoning</span>
-              <span class="mc-pill-val">Capsize threshold for artisanal crafts (&lt;15m), storm surge inundation, harbor clearance</span>
-            </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">3. Actionable Output</span>
-              <span class="mc-pill-val">Fishermen sea-entry clearance, vessel docking windows, high swell warnings</span>
-            </div>
-          </div>
-          <div class="mc-sample-prompt">
-            <strong>Sample Prompt:</strong> "Can artisanal fishing boats safely venture off Vizag coast tonight?"
           </div>
         </div>
 
-        <!-- MODE 4: DISASTER & CRISIS -->
-        <div class="mode-card" id="mode-disaster-card">
-          <div class="mc-header">
-            <div class="mc-icon">🚨</div>
-            <div>
-              <div class="mc-mode-name">DISASTER ALERTS</div>
-              <div class="mc-mode-role">Early Warning & Evacuation Intel</div>
+        <!-- Mode 4: Disaster -->
+        <div class="mode-console-panel" id="panel-disaster">
+          <div class="mcp-left">
+            <div class="mcp-domain-tag">
+              <span class="mcp-coord">[ 22° 34' N, 88° 21' E ] &middot; COASTAL GULF</span>
+              <span class="mcp-status-badge">HIGH ALERT // TACTICAL</span>
             </div>
-            <a href="chat.html?mode=alert" class="mc-try-link" title="Launch Alert Mode in Chat">Try &rarr;</a>
+            <h4 class="mcp-headline">Disaster Response &amp; Crisis Management</h4>
+            <div class="mcp-prompt-box">
+              <span class="mcp-prompt-label">SAMPLE USER INQUIRY</span>
+              <p class="mcp-prompt-text">“Track Cyclone Remal storm surge risk for low-lying coastal wards.”</p>
+            </div>
+            <div class="mcp-dispatch-box">
+              <span class="mcp-dispatch-label">SYNTHESIZED ACTION DIRECTIVE</span>
+              <p class="mcp-dispatch-text">
+                MOSDAC INSAT cloud-top cooling combined with CWC river discharge confirms a 2.4m storm surge breaching embankments in Ward 4 &amp; 7 within 4.5 hours. <strong>Initiate Zone-A evacuation immediately via elevated Corridor NH-16.</strong>
+              </p>
+            </div>
+            <div class="mcp-action-row">
+              <a href="chat.html?mode=alert" class="mcp-launch-btn">
+                Launch Disaster Mode in Chat
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
           </div>
-          <div class="mc-pills-flow">
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">1. Ingested Data</span>
-              <span class="mc-pill-val">MOSDAC INSAT cloud-tops, CWC river basin levels, urban drainage, cyclone tracks</span>
-            </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">2. Domain Reasoning</span>
-              <span class="mc-pill-val">Flash flood time-to-peak, surge inundation contour, critical evacuation bottlenecks</span>
-            </div>
-            <div class="mc-pill-group">
-              <span class="mc-pill-label">3. Actionable Output</span>
-              <span class="mc-pill-val">Color-coded ward evacuation alerts, safe shelter routing, NDRF staging triggers</span>
+          <div class="mcp-right">
+            <div class="mcp-pipeline-title">[ 3-TIER ANALYTICAL PIPELINE ]</div>
+            <div class="mcp-flow">
+              <div class="mcp-step">
+                <div class="mcp-step-num">01</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Ingested Telemetry Feeds</span>
+                    <span class="mcp-step-badge">Satellite &amp; Radars</span>
+                  </div>
+                  <p class="mcp-step-desc">MOSDAC INSAT-3DR thermal cloud-tops, CWC river discharge gauges, urban storm drainage sensors, IMD cyclone tracking cones.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">02</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Domain Reasoning Engine</span>
+                    <span class="mcp-step-badge">Crisis Inundation</span>
+                  </div>
+                  <p class="mcp-step-desc">Flash flood time-to-peak hydrographs, surge inundation elevation contouring, critical evacuation bottleneck detection algorithms.</p>
+                </div>
+              </div>
+              <div class="mcp-step">
+                <div class="mcp-step-num">03</div>
+                <div class="mcp-step-content">
+                  <div class="mcp-step-header">
+                    <span class="mcp-step-title">Operational Output</span>
+                    <span class="mcp-step-badge">NDRF Directives</span>
+                  </div>
+                  <p class="mcp-step-desc">Color-coded ward evacuation alerts, safe shelter routing maps, NDRF staging trigger notifications, flood embankment breach warnings.</p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="mc-sample-prompt">
-            <strong>Sample Prompt:</strong> "Track Cyclone Remal storm surge risk for low-lying coastal wards"
+        </div>
+
+      </div><!-- /.mode-console -->
+
+      <!-- Mode Quick Cards (Editorial Luxury Bento) -->
+      <div class="mode-bento-grid">
+        <div class="mode-bento-card active" data-target-mode="travel">
+          <div class="mbc-top">
+            <span class="mbc-num">01</span>
+            <span class="mbc-badge">HIGHWAY SAFETY</span>
+          </div>
+          <h5 class="mbc-title">Travel Mode</h5>
+          <p class="mbc-desc">Route hazard timelines, ghat landslide indices &amp; departure shift alerts.</p>
+          <div class="mbc-metric">
+            <span class="mbc-mval">98.4%</span>
+            <span class="mbc-mlab">Hazard Forecast Precision</span>
+          </div>
+        </div>
+        <div class="mode-bento-card" data-target-mode="farmer">
+          <div class="mbc-top">
+            <span class="mbc-num">02</span>
+            <span class="mbc-badge">AGRO ADVISORY</span>
+          </div>
+          <h5 class="mbc-title">Farmer Mode</h5>
+          <p class="mbc-desc">Pesticide rain wash-off risk, soil root moisture &amp; precision spray windows.</p>
+          <div class="mbc-metric">
+            <span class="mbc-mval">0-100cm</span>
+            <span class="mbc-mlab">Soil Moisture Telemetry</span>
+          </div>
+        </div>
+        <div class="mode-bento-card" data-target-mode="marine">
+          <div class="mbc-top">
+            <span class="mbc-num">03</span>
+            <span class="mbc-badge">COASTAL &amp; PORTS</span>
+          </div>
+          <h5 class="mbc-title">Marine Mode</h5>
+          <p class="mbc-desc">Craft capsize thresholds, swell period vectors &amp; safe harbour docking windows.</p>
+          <div class="mbc-metric">
+            <span class="mbc-mval">INCOIS</span>
+            <span class="mbc-mlab">Moored Wave Buoy Arrays</span>
+          </div>
+        </div>
+        <div class="mode-bento-card" data-target-mode="disaster">
+          <div class="mbc-top">
+            <span class="mbc-num">04</span>
+            <span class="mbc-badge">CRISIS COMMAND</span>
+          </div>
+          <h5 class="mbc-title">Disaster Alerts</h5>
+          <p class="mbc-desc">Flash flood time-to-peak, storm surge inundation &amp; ward evacuation corridors.</p>
+          <div class="mbc-metric">
+            <span class="mbc-mval">15-min</span>
+            <span class="mbc-mlab">INSAT-3DR Thermal Scans</span>
           </div>
         </div>
       </div>
-    </div>
+    </div><!-- /.modes-architecture-wrap -->
 
-    <!-- The Really Powerful Part: Automatic Data Orchestration Bar -->
+    <!-- Automatic Data Orchestration: White Desert Flight/Telemetry HUD -->
     <div class="orchestration-strip">
-      <div class="orch-label">
-        <span class="orch-badge">THE POWER ENGINE</span>
-        <h4>Automatic Multi-Source Data Orchestration</h4>
-        <p>WeatherGPT's semantic context router determines which national telemetry feeds to query simultaneously:</p>
+      <div class="orch-top-bar">
+        <div>
+          <div class="section-eyebrow">[ TELEMETRY BACKBONE ]</div>
+          <h4 class="orch-heading">National Multi-Source Meteorological Orchestration</h4>
+          <p class="orch-sub">WeatherGPT’s contextual broker ingests and cross-calibrates national telemetry feeds in real time:</p>
+        </div>
+        <div class="orch-live-beacon">
+          <span class="beacon-pulse"></span>
+          <span>6 NATIONAL NETWORKS ACTIVE</span>
+        </div>
       </div>
+
       <div class="orch-badges-grid">
         <div class="orch-item">
+          <span class="oi-label">SURFACE SENSOR NETWORK</span>
           <span class="oi-num">4,000+</span>
           <span class="oi-title">IMD AWS Stations</span>
-          <span class="oi-sub">Surface pressure, temp, wind</span>
+          <span class="oi-sub">Surface pressure, temperature, dew point, wind barbs</span>
+          <span class="oi-status">● LIVE STREAM</span>
         </div>
         <div class="orch-item">
+          <span class="oi-label">PRECIPITATION NOWCAST</span>
           <span class="oi-num">39</span>
-          <span class="oi-title">Doppler Weather Radars</span>
-          <span class="oi-sub">Precipitation nowcasting & velocity</span>
+          <span class="oi-title">Doppler Radars</span>
+          <span class="oi-sub">High-resolution convective cell tracking &amp; hydrometeor velocity</span>
+          <span class="oi-status">● C-BAND / S-BAND</span>
         </div>
         <div class="orch-item">
+          <span class="oi-label">HYDROLOGICAL MONITORING</span>
           <span class="oi-num">CWC</span>
-          <span class="oi-title">River Gauging Network</span>
-          <span class="oi-sub">Basin water levels & discharge</span>
+          <span class="oi-title">River Basin Telemetry</span>
+          <span class="oi-sub">Basin water levels, discharge volume, embankment stress</span>
+          <span class="oi-status">● GAUGE NETWORK</span>
         </div>
         <div class="orch-item">
+          <span class="oi-label">OCEAN DYNAMICS</span>
           <span class="oi-num">INCOIS</span>
           <span class="oi-title">Ocean State Forecast</span>
-          <span class="oi-sub">Wave height, swells & storm surge</span>
+          <span class="oi-sub">Significant wave height, swell vectors &amp; storm surge models</span>
+          <span class="oi-status">● MOORED BUOYS</span>
         </div>
         <div class="orch-item">
+          <span class="oi-label">GEOSTATIONARY SATELLITE</span>
           <span class="oi-num">ISRO</span>
-          <span class="oi-title">MOSDAC & INSAT-3DR</span>
-          <span class="oi-sub">Visible, IR & water vapor imaging</span>
+          <span class="oi-title">MOSDAC &amp; INSAT-3DR</span>
+          <span class="oi-sub">Visible, infrared, water vapor atmospheric sounding</span>
+          <span class="oi-status">● 15-MIN CYCLES</span>
         </div>
         <div class="orch-item">
+          <span class="oi-label">NUMERICAL PREDICTION</span>
           <span class="oi-num">NWP</span>
-          <span class="oi-title">Open-Meteo & ECMWF</span>
-          <span class="oi-sub">High-resolution ensemble models</span>
+          <span class="oi-title">ECMWF &amp; GFS Ensemble</span>
+          <span class="oi-sub">Global physics models with high-resolution localized downscaling</span>
+          <span class="oi-status">● ENSEMBLE RUNS</span>
         </div>
       </div>
+
       <div class="orch-cta-row">
+        <span class="orch-footnote">Continuous multi-source data ingestion with zero API latency.</span>
         <a href="chat.html" class="orch-btn">
-          Test Live Decision Orchestration in Chat
+          Test Domain Decision Engine in Chat Console
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
@@ -838,5 +1017,88 @@
   </div>
 
   <script src="scripts/landing.js"></script>
+
+  <script>
+    /* ── India Story: Scroll entrance + click-to-lock panel ── */
+    (function() {
+      const story = document.getElementById('indiaStory');
+      const panels = document.querySelectorAll('.india-panel');
+
+      // Scroll-triggered entrance
+      if (story && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver(([entry]) => {
+          if (entry.isIntersecting) {
+            story.classList.add('is-visible');
+            io.disconnect();
+          }
+        }, { threshold: 0.15 });
+        io.observe(story);
+      } else if (story) {
+        story.classList.add('is-visible');
+      }
+
+      // Click to lock/unlock expanded panel
+      panels.forEach(panel => {
+        panel.addEventListener('click', function(e) {
+          if (e.target.closest('.india-panel__cta')) return; // let CTA links through
+          const isActive = this.classList.contains('india-panel--active');
+          panels.forEach(p => p.classList.remove('india-panel--active'));
+          if (!isActive) this.classList.add('india-panel--active');
+        });
+
+        // Keyboard accessibility
+        panel.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+          }
+        });
+      });
+    })();
+
+    /* ── Modes Architecture: Interactive Console & Tab Switcher ── */
+    (function() {
+      const tabs = document.querySelectorAll('.mode-tab');
+      const bentoCards = document.querySelectorAll('.mode-bento-card');
+      const panels = document.querySelectorAll('.mode-console-panel');
+
+      if (!tabs.length || !panels.length) return;
+
+      function activateMode(modeId) {
+        tabs.forEach(t => {
+          const match = t.getAttribute('data-mode') === modeId;
+          t.classList.toggle('active', match);
+          t.setAttribute('aria-selected', match ? 'true' : 'false');
+        });
+
+        bentoCards.forEach(c => {
+          c.classList.toggle('active', c.getAttribute('data-target-mode') === modeId);
+        });
+
+        panels.forEach(p => {
+          const match = p.id === 'panel-' + modeId;
+          p.classList.toggle('active', match);
+        });
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const modeId = tab.getAttribute('data-mode');
+          activateMode(modeId);
+        });
+      });
+
+      bentoCards.forEach(card => {
+        card.addEventListener('click', () => {
+          const modeId = card.getAttribute('data-target-mode');
+          activateMode(modeId);
+          const consoleEl = document.getElementById('modeConsole');
+          if (consoleEl) {
+            consoleEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -5,18 +5,26 @@ from .geocoding_service import get_coordinates
 from .providers.base import BaseWeatherProvider
 from .providers.open_meteo import OpenMeteoProvider
 from .providers.imd import IMDProvider
+from .providers.tomorrow_io import TomorrowIOProvider
 
 
 def get_weather_provider() -> BaseWeatherProvider:
     """
     Factory function to obtain the configured weather data provider.
-    Active MVP default: OpenMeteoProvider.
-    Future optional provider: IMDProvider (when WEATHER_PROVIDER=imd and valid credentials exist).
+
+    Priority order (set WEATHER_PROVIDER env var to override):
+      1. tomorrow_io  — Tomorrow.io v4 API (default; richest data, UV, snow, visibility)
+      2. open_meteo   — Open-Meteo (free, keyless fallback)
+      3. imd          — India Meteorological Department (when WEATHER_PROVIDER=imd)
     """
-    provider_name = os.getenv("WEATHER_PROVIDER", "open_meteo").lower().strip()
+    provider_name = os.getenv("WEATHER_PROVIDER", "tomorrow_io").lower().strip()
     if provider_name == "imd":
         return IMDProvider()
-    return OpenMeteoProvider()
+    if provider_name == "open_meteo":
+        # Explicit opt-in to the free keyless provider
+        return OpenMeteoProvider()
+    # Default: Tomorrow.io
+    return TomorrowIOProvider()
 
 
 def get_active_provider_name() -> str:

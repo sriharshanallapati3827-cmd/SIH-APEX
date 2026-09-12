@@ -22,14 +22,44 @@
    STATE — Single source of truth for all runtime data
    ============================================================================= */
 const state = {
-  messages:          [],       // [{role:'user'|'ai', content:'...'}]
-  isTyping:          false,    // blocks duplicate sends while AI processes
-  conversationCount: 1,        // history counter
-  mode:              'home',   // 'home' | 'farmer' | 'travel' | 'alert'
-  lang:              'en',     // 'en' | 'hi' | 'te'
-  isRecording:       false,    // voice recognition active
-  recognition:       null,     // SpeechRecognition instance
+  messages:           [],       // [{role:'user'|'ai', content:'...'}]
+  isTyping:           false,    // blocks duplicate sends while AI processes
+  conversationCount:  1,        // history counter
+  mode:               'home',   // 'home' | 'farmer' | 'travel' | 'alert'
+  lang:               'en',     // 'en' | 'hi' | 'te'
+  isRecording:        false,    // voice recognition active
+  recognition:        null,     // SpeechRecognition instance
+  conversationHistory: [],      // [{role:'user'|'model', text:'...'}] — sent to Gemini for memory
+  currentSessionId:   null,     // Active localStorage session ID
+  sessionTitle:       null,     // Auto-generated from first user message
 };
+
+/* =============================================================================
+   WEATHER PUNCHLINES — Rotates on each new chat
+   ============================================================================= */
+const WEATHER_PUNCHLINES = [
+  'Because "70% rain" shouldn\'t ruin your road trip.',
+  'Turning chaotic atmospheric physics into your next safe move.',
+  'Know before you go — weather, live, for every Indian road.',
+  'IMD data + AI reasoning = no more weather surprises.',
+  'Sun or storm? Ask before you pack the umbrella.',
+  'Smart weather is not a forecast. It\'s a decision engine.',
+  'Your daily commute, backed by real-time satellite telemetry.',
+  'Rain gauge + AI = the world\'s clearest travel plan.',
+  'Where monsoons meet machine learning. Welcome home.',
+  'Live radar. AI reasoning. Zero weather guesswork.',
+  'Because farmers, travelers, and fisherfolk deserve real data.',
+  'The only forecast that tells you when to skip the trek.',
+];
+
+let _punchlineIdx = Math.floor(Math.random() * WEATHER_PUNCHLINES.length);
+function nextPunchline() {
+  _punchlineIdx = (_punchlineIdx + 1) % WEATHER_PUNCHLINES.length;
+  return WEATHER_PUNCHLINES[_punchlineIdx];
+}
+function randomPunchline() {
+  return WEATHER_PUNCHLINES[Math.floor(Math.random() * WEATHER_PUNCHLINES.length)];
+}
 
 /* =============================================================================
    DOM REFERENCES
@@ -75,6 +105,22 @@ const drawerClose        = document.getElementById('drawerClose');
 const drawerNewBtn       = document.getElementById('drawerNewBtn');
 const chatHistory        = document.getElementById('chatHistory');
 const quickQueries       = document.getElementById('quickQueries');
+const historySearchInput = document.getElementById('historySearchInput');
+const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
+
+// Header elements
+const headerPunchline    = document.getElementById('headerPunchline');
+const sidebarToggleBtn   = document.getElementById('sidebarToggleBtn');
+
+// Header weather chip
+const hwcSpinner         = document.getElementById('hwcSpinner');
+const hwcReady           = document.getElementById('hwcReady');
+const hwcCityName        = document.getElementById('hwcCityName');
+const hwcCondIcon        = document.getElementById('hwcCondIcon');
+const hwcBigTemp         = document.getElementById('hwcBigTemp');
+const hwcCondText        = document.getElementById('hwcCondText');
+const hwcHLText          = document.getElementById('hwcHLText');
+const headerWeatherChip  = document.getElementById('headerWeatherChip');
 
 // Media modal (sources/ feeds)
 const mediaModal         = document.getElementById('mediaModal');
@@ -311,6 +357,9 @@ async function sendMessage() {
   appendUserMessage(text);
   state.messages.push({ role: 'user', content: text });
 
+  // Auto-title from first message
+  if (!state.sessionTitle) state.sessionTitle = text.slice(0, 60);
+
   // 3. Reset input field
   messageInput.value = '';
   messageInput.style.height = 'auto';
@@ -336,6 +385,9 @@ async function sendMessage() {
       appendAIMessage(response.text, response.card);
       state.messages.push({ role: 'ai', content: response.text });
       scrollToBottom();
+      // Persist session to localStorage
+      saveCurrentSession();
+      renderChatHistory();
     }, remaining);
   } catch (err) {
     console.error('[WeatherGPT Chat] Response generation failed:', err);
@@ -351,6 +403,7 @@ async function sendMessage() {
  */
 function resetToEmptyState() {
   state.messages = [];
+  state.conversationHistory = [];   // ← clear Gemini memory on new chat
   messagesList.innerHTML = '';
   chatStage.classList.remove('is-chatting');
   messageInput.value = '';
@@ -653,20 +706,60 @@ async function generateResponseAsync(query, mode, lang) {
   const q = query.toLowerCase().trim();
 
   // ── 0. LIVE GEMINI 2.5 FLASH BACKEND (FastAPI on http://localhost:8000) ──
-  try {
-    const backendRes = await fetch('http://localhost:8000/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: query, mode: mode, lang: lang })
-    });
-    if (backendRes.ok) {
-      const data = await backendRes.json();
-      if (data.answer && !data.answer.startsWith('WeatherGPT Connection Error')) {
-        return { text: data.answer };
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const backendRes = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query,
+          mode: mode,
+          lang: lang,
+          conversation_history: state.conversationHistory   // ← full memory sent every turn
+        })
+      });
+
+      if (backendRes.ok) {
+        const data = await backendRes.json();
+        const answer = data.answer || '';
+
+        // Retry if API was overloaded (partial / error response)
+        if (answer.includes('overloaded') || answer.includes('503') || answer.length < 10) {
+          if (attempt < MAX_RETRIES) {
+            await new Promise(r => setTimeout(r, attempt * 1500)); // 1.5s, 3s backoff
+            continue;
+          }
+        }
+
+        if (answer && !answer.startsWith('WeatherGPT Connection Error') && !answer.startsWith('⏳') && !answer.startsWith('⚠️ WeatherGPT Intelligence Engine temporarily unavailable')) {
+          // Update client-side history from backend's authoritative updated list
+          if (data.conversation_history && Array.isArray(data.conversation_history)) {
+            state.conversationHistory = data.conversation_history;
+          } else {
+            state.conversationHistory.push(
+              { role: 'user',  text: query },
+              { role: 'model', text: answer }
+            );
+          }
+          return { text: answer };
+        }
+      } else if (backendRes.status === 503 || backendRes.status === 429) {
+        // API overloaded — wait and retry
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, attempt * 2000));
+          continue;
+        }
+      }
+    } catch (err) {
+      if (attempt === MAX_RETRIES) {
+        console.info('[WeatherGPT] Backend offline after retries, using client fallback:', err.message);
+      } else {
+        await new Promise(r => setTimeout(r, attempt * 1000));
+        continue;
       }
     }
-  } catch (err) {
-    console.info('[WeatherGPT] Live backend offline, executing client-side intelligence:', err.message);
+    break; // exit retry loop on non-retryable error
   }
 
   // ── 1. HINDI OUTPUT ──
@@ -1077,9 +1170,9 @@ function initEventListeners() {
   });
 
   // Clear / Reset chat to centered state
-  clearBtn.addEventListener('click', resetToEmptyState);
-  railNewChat.addEventListener('click', resetToEmptyState);
-  drawerNewBtn.addEventListener('click', resetToEmptyState);
+  clearBtn.addEventListener('click', createNewChat);
+  railNewChat.addEventListener('click', createNewChat);
+  drawerNewBtn.addEventListener('click', createNewChat);
 
   // Prompt chips clicks
   document.addEventListener('click', (e) => {
@@ -1138,15 +1231,287 @@ function initEventListeners() {
   setupVoice();
 }
 
-// Bootstrap
+/* =============================================================================
+   LIVE HEADER WEATHER CHIP — Fetches GPS → Open-Meteo → displays iOS-style
+   ============================================================================= */
+async function initHeaderWeatherChip() {
+  if (!navigator.geolocation) {
+    if (hwcSpinner) hwcSpinner.style.display = 'none';
+    return;
+  }
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 300000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+
+    // Reverse geocode city name via Nominatim (free, no key required)
+    let cityLabel = 'My Location';
+    try {
+      const nomRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en&zoom=10`,
+        { headers: { 'User-Agent': 'WeatherGPT/1.0' }, signal: AbortSignal.timeout(5000) }
+      );
+      if (nomRes.ok) {
+        const nomJson = await nomRes.json();
+        const addr = nomJson.address || {};
+        cityLabel = addr.city || addr.town || addr.village || addr.county || addr.state_district || 'My Location';
+      }
+    } catch (_) { /* silently use fallback */ }
+
+    // Fetch weather from Open-Meteo
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+    const wxRes  = await fetch(wxUrl);
+    if (!wxRes.ok) throw new Error('Weather fetch failed');
+    const wxJson  = await wxRes.json();
+    const curr    = wxJson.current;
+    const daily   = wxJson.daily;
+
+    const temp    = Math.round(curr.temperature_2m);
+    const feelsLk = Math.round(curr.apparent_temperature);
+    const high    = daily ? Math.round(daily.temperature_2m_max[0]) : feelsLk + 2;
+    const low     = daily ? Math.round(daily.temperature_2m_min[0]) : temp - 4;
+    const wmo     = getWmoWeatherInfo(curr.weather_code);
+
+    // Populate chip
+    hwcCityName.textContent  = cityLabel;
+    hwcCondIcon.textContent  = wmo.icon;
+    hwcBigTemp.textContent   = `${temp}°`;
+    hwcCondText.textContent  = wmo.desc.split(' ·')[0];
+    hwcHLText.textContent    = `H:${high}° L:${low}°`;
+
+    hwcSpinner.style.display = 'none';
+    hwcReady.style.display   = 'block';
+
+    // Click chip → ask weather for this location
+    headerWeatherChip.addEventListener('click', () => {
+      messageInput.value = `What is the weather right now at my location (${lat.toFixed(3)}, ${lon.toFixed(3)}) — ${cityLabel}?`;
+      updateSendBtnState();
+      messageInput.focus();
+    });
+
+  } catch (err) {
+    console.warn('[WeatherChip] GPS or fetch error:', err.message);
+    if (hwcSpinner) hwcSpinner.style.display = 'none';
+  }
+}
+
+/* =============================================================================
+   SESSION MANAGER — localStorage-backed chat history
+   ============================================================================= */
+const SESSION_KEY = 'weathergpt_sessions_v2';
+
+function generateSessionId() {
+  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+function loadSessions() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+  } catch (_) { return {}; }
+}
+
+function saveSessions(sessions) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+  } catch (_) { /* quota exceeded */ }
+}
+
+function saveCurrentSession() {
+  if (!state.currentSessionId || state.messages.length === 0) return;
+  const sessions = loadSessions();
+  const firstUserMsg = state.messages.find(m => m.role === 'user');
+  sessions[state.currentSessionId] = {
+    id:        state.currentSessionId,
+    title:     state.sessionTitle || (firstUserMsg ? firstUserMsg.content.slice(0, 60) : 'New Chat'),
+    mode:      state.mode,
+    timestamp: Date.now(),
+    messages:  state.messages,
+    history:   state.conversationHistory,
+  };
+  saveSessions(sessions);
+}
+
+function renderChatHistory(filterText = '') {
+  if (!chatHistory) return;
+  const sessions = loadSessions();
+  const list = Object.values(sessions).sort((a, b) => b.timestamp - a.timestamp);
+  const filtered = filterText.trim()
+    ? list.filter(s => s.title.toLowerCase().includes(filterText.toLowerCase()))
+    : list;
+
+  if (filtered.length === 0) {
+    chatHistory.innerHTML = `
+      <div class="history-empty">
+        <div class="history-empty-icon">💬</div>
+        <div>${filterText ? 'No chats match your search.' : 'No saved conversations yet.\nStart chatting to build your history!'}</div>
+      </div>`;
+    return;
+  }
+
+  const modeIcons = { home:'⚡', farmer:'🌾', travel:'✈️', marine:'⚓', alert:'🚨' };
+  chatHistory.innerHTML = filtered.map(s => {
+    const relTime = formatRelativeTime(s.timestamp);
+    const icon    = modeIcons[s.mode] || '💬';
+    const isActive = s.id === state.currentSessionId ? ' active-session' : '';
+    return `
+      <div class="history-item${isActive}" data-session-id="${s.id}">
+        <div class="hi-icon">${icon}</div>
+        <div class="hi-info">
+          <div class="hi-title">${escapeHtml(s.title)}</div>
+          <div class="hi-time">${relTime}</div>
+        </div>
+        <button class="hi-delete-btn" data-delete-id="${s.id}" title="Delete">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>`;
+  }).join('');
+
+  // Wire click events
+  chatHistory.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.hi-delete-btn')) return; // handled separately
+      loadChatSession(item.dataset.sessionId);
+    });
+  });
+  chatHistory.querySelectorAll('.hi-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteSession(btn.dataset.deleteId);
+    });
+  });
+}
+
+function loadChatSession(sessionId) {
+  const sessions = loadSessions();
+  const session  = sessions[sessionId];
+  if (!session) return;
+
+  // Save current session before switching
+  saveCurrentSession();
+
+  // Restore session state
+  state.currentSessionId    = sessionId;
+  state.sessionTitle        = session.title;
+  state.mode                = session.mode || 'home';
+  state.messages            = session.messages || [];
+  state.conversationHistory = session.history || [];
+
+  // Re-render messages
+  messagesList.innerHTML = '';
+  state.messages.forEach(m => {
+    if (m.role === 'user') appendUserMessage(m.content);
+    else if (m.role === 'ai') appendAIMessage(m.content);
+  });
+
+  if (state.messages.length > 0) {
+    chatStage.classList.add('is-chatting');
+  }
+  setMode(state.mode);
+  closeDrawer();
+  scrollToBottom();
+  renderChatHistory();
+}
+
+function deleteSession(sessionId) {
+  const sessions = loadSessions();
+  delete sessions[sessionId];
+  saveSessions(sessions);
+  if (state.currentSessionId === sessionId) {
+    createNewChat();
+  }
+  renderChatHistory(historySearchInput ? historySearchInput.value : '');
+}
+
+function createNewChat() {
+  saveCurrentSession();
+  state.currentSessionId    = generateSessionId();
+  state.sessionTitle        = null;
+  state.messages            = [];
+  state.conversationHistory = [];
+  messagesList.innerHTML    = '';
+  chatStage.classList.remove('is-chatting');
+  messageInput.value        = '';
+  messageInput.style.height = 'auto';
+  updateSendBtnState();
+  setMode(state.mode);
+  // Rotate punchline
+  if (headerPunchline) headerPunchline.textContent = nextPunchline();
+  closeDrawer();
+  messageInput.focus();
+  renderChatHistory();
+}
+
+function formatRelativeTime(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+}
+
+/* =============================================================================
+   BOOTSTRAP — Full initialization
+   ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
+  // Init session ID for this page load
+  state.currentSessionId = generateSessionId();
+
+  // Set punchline
+  if (headerPunchline) headerPunchline.textContent = randomPunchline();
+
+  // Wire all existing event listeners
   initEventListeners();
-  const urlParams = new URLSearchParams(window.location.search);
+
+  // Wire sidebar toggle button
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener('click', () => {
+      if (drawerPanel.classList.contains('open')) closeDrawer();
+      else openDrawer();
+    });
+  }
+
+  // Wire drawer search
+  if (historySearchInput) {
+    historySearchInput.addEventListener('input', () => {
+      renderChatHistory(historySearchInput.value);
+    });
+  }
+
+  // Wire clear all history
+  if (clearAllHistoryBtn) {
+    clearAllHistoryBtn.addEventListener('click', () => {
+      if (confirm('Delete all chat history? This cannot be undone.')) {
+        saveSessions({});
+        createNewChat();
+      }
+    });
+  }
+
+  // Render saved history in drawer
+  renderChatHistory();
+
+  // Start URL mode or default
+  const urlParams     = new URLSearchParams(window.location.search);
   const requestedMode = urlParams.get('mode');
   if (requestedMode && MODES[requestedMode]) {
     setMode(requestedMode);
   } else {
     setMode('home');
   }
+
+  // Auto-save session every 30 seconds
+  setInterval(saveCurrentSession, 30000);
+
+  // Load live weather chip
+  initHeaderWeatherChip();
+
   messageInput.focus();
 });
+
+// Save session on page unload
+window.addEventListener('beforeunload', saveCurrentSession);
