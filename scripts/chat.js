@@ -1043,9 +1043,12 @@ function extractCityFromQuery(query) {
 function formatMarkdown(text) {
   if (!text) return '';
 
+  // 0. Normalize newlines (handle Windows CRLF & Mac CR)
+  let processed = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
   // 1. Extract and preserve multiline fenced code blocks (```lang ... ```)
   const codeBlocks = [];
-  let processed = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+  processed = processed.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
     const idx = codeBlocks.length;
     const safeLang = lang ? lang.trim() : 'code';
     codeBlocks.push(`
@@ -1062,41 +1065,72 @@ function formatMarkdown(text) {
 
   // 2. Headings: ### and ## and #
   processed = processed
-    .replace(/^### (.*$)/gim, '<h3 class="ai-md-h3" style="font-size:1.02rem;color:#bae6fd;margin:14px 0 6px;font-weight:600;">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="ai-md-h2" style="font-size:1.18rem;color:#a8c7fa;margin:18px 0 8px;font-weight:700;letter-spacing:-0.01em;">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="ai-md-h1" style="font-size:1.3rem;color:#e3e3e3;margin:20px 0 10px;font-weight:700;">$1</h1>');
+    .replace(/^### (.*$)/gim, '<h3 class="ai-md-h3" style="font-size:1.02rem;color:#bae6fd;margin:16px 0 8px;font-weight:600;display:flex;align-items:center;gap:6px;">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="ai-md-h2" style="font-size:1.18rem;color:#a8c7fa;margin:20px 0 10px;font-weight:700;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="ai-md-h1" style="font-size:1.3rem;color:#e3e3e3;margin:22px 0 12px;font-weight:700;">$1</h1>');
 
   // 3. Horizontal rules
-  processed = processed.replace(/^---$/gim, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.12);margin:16px 0;">');
+  processed = processed.replace(/^---$/gim, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:16px 0;">');
 
-  // 4. Blockquotes: > quote
-  processed = processed.replace(/^> (.*$)/gim, '<blockquote style="border-left:3px solid #a8c7fa;padding:6px 12px;margin:10px 0;background:rgba(168,199,250,0.06);border-radius:0 6px 6px 0;">$1</blockquote>');
+  // 4. Robust Markdown Tables (handles colons :---, spacing, and pipe delimiters)
+  processed = processed.replace(/(?:^|\n)((?:[ \t]*\|[^\n]+\|[ \t]*(?:\n|$)){2,})/g, (match, tableBlock) => {
+    const lines = tableBlock.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return match;
+    // Check if line 2 is markdown divider: e.g. |:---|:---| or |---|---|
+    const isDivider = /^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)+\|?$/.test(lines[1]);
+    if (!isDivider) return match;
 
-  // 5. Bold & Inline Code
+    const parseCells = (line) => {
+      let raw = line.replace(/^\|/, '').replace(/\|$/, '');
+      return raw.split('|').map(c => c.trim());
+    };
+
+    const headers = parseCells(lines[0])
+      .map(c => `<th style="padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.14);color:#bae6fd;font-size:0.83rem;font-weight:600;background:rgba(255,255,255,0.05);letter-spacing:0.02em;">${c}</th>`)
+      .join('');
+
+    const bodyRows = lines.slice(2).map(line => {
+      const cells = parseCells(line)
+        .map(c => `<td style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.85rem;color:#e2e8f0;line-height:1.5;">${c}</td>`)
+        .join('');
+      return `<tr style="transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">${cells}</tr>`;
+    }).join('');
+
+    return `\n<div class="ai-table-wrap" style="overflow-x:auto;margin:16px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(15,23,42,0.65);box-shadow:0 4px 12px rgba(0,0,0,0.2);"><table style="width:100%;border-collapse:collapse;text-align:left;"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div>\n`;
+  });
+
+  // 5. Unified Blockquotes: group consecutive lines starting with > into one single callout card
+  processed = processed.replace(/(?:^|\n)((?:[ \t]*>[ \t]?.*(?:\n|$))+)/g, (match, quoteBlock) => {
+    const rawLines = quoteBlock
+      .trim()
+      .split('\n')
+      .map(l => l.replace(/^[ \t]*>[ \t]?/, ''));
+
+    const content = rawLines
+      .map(line => {
+        let l = line.trim();
+        if (l.startsWith('- ')) {
+          return `<div style="margin:4px 0 4px 12px;display:flex;align-items:flex-start;gap:6px;"><span style="color:#38bdf8;">•</span><span>${l.slice(2)}</span></div>`;
+        }
+        return `<div>${l}</div>`;
+      })
+      .join('');
+
+    return `\n<blockquote style="border-left:3px solid #38bdf8;padding:12px 18px;margin:14px 0;background:rgba(56,189,248,0.08);border-radius:0 8px 8px 0;line-height:1.6;color:#f0f9ff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">${content}</blockquote>\n`;
+  });
+
+  // 6. Bold & Inline Code
   processed = processed
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.85em;font-family:monospace;color:#fca5a5;">$1</code>');
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#ffffff;font-weight:600;">$1</strong>')
+    .replace(/`([^`]+?)`/g, '<code style="background:rgba(255,255,255,0.09);padding:2px 7px;border-radius:4px;font-size:0.86em;font-family:monospace;color:#fca5a5;border:1px solid rgba(255,255,255,0.06);">$1</code>');
 
-  // 6. Bullet lists (* item, - item, * - item, or • item)
-  processed = processed.replace(/^[\s]*[\*\-\•][\*\-\•\s]*\s+(.+)$/gim, '<li style="margin:4px 0;padding-left:4px;line-height:1.55;">$1</li>');
+  // 7. Bullet lists (* item, - item, or • item)
+  processed = processed.replace(/^[\s]*[\*\-\•][\*\-\•\s]*\s+(.+)$/gim, '<li style="margin:5px 0;padding-left:4px;line-height:1.6;">$1</li>');
   // Group adjacent <li> into <ul>
   processed = processed.replace(/((?:<li[\s\S]*?<\/li>\n?)+)/g, '<ul style="list-style:disc;padding-left:22px;margin:10px 0;">$1</ul>');
 
-  // 7. Inline italics (only match *word* that is not at the start of a tag or bullet)
+  // 8. Inline italics (only match *word* that is not at the start of a tag or bullet)
   processed = processed.replace(/(?<![<a-zA-Z0-9])\*([^\*\n]+?)\*(?![a-zA-Z0-9>])/g, '<em>$1</em>');
-
-  // 8. Markdown Tables
-  processed = processed.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g, (match) => {
-    const lines   = match.trim().split('\n');
-    const headers = lines[0].split('|').filter(c => c.trim())
-      .map(c => `<th style="padding:6px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);color:#a8c7fa;font-size:0.8rem;">${c.trim()}</th>`).join('');
-    const rows = lines.slice(2).map(line => {
-      const cells = line.split('|').filter(c => c.trim())
-        .map(c => `<td style="padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">${c.trim()}</td>`).join('');
-      return `<tr>${cells}</tr>`;
-    }).join('');
-    return `<div style="overflow-x:auto;margin:12px 0;"><table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border-radius:8px;"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  });
 
   // 9. Paragraph wrapping: split on double newlines without breaking structured HTML blocks
   const blocks = processed.split(/\n\n+/);
