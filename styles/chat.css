@@ -168,7 +168,7 @@ html, body {
   left: var(--rail-width);
   width: 290px;
   height: 100vh;
-  background: #191a1b;
+  background: #1b1b1d;
   border-right: 1px solid var(--gemini-border);
   box-shadow: 8px 0 24px rgba(0,0,0,0.5);
   transform: translateX(calc(-100% - var(--rail-width) - 20px));
@@ -187,8 +187,9 @@ html, body {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
