@@ -12,19 +12,16 @@ def get_weather_provider() -> BaseWeatherProvider:
     """
     Factory function to obtain the configured weather data provider.
 
-    Priority order (set WEATHER_PROVIDER env var to override):
-      1. tomorrow_io  — Tomorrow.io v4 API (default; richest data, UV, snow, visibility)
-      2. open_meteo   — Open-Meteo (free, keyless fallback)
-      3. imd          — India Meteorological Department (when WEATHER_PROVIDER=imd)
+    Default: Open-Meteo (100% free, keyless, reliable 10,000 requests/day).
+    Optional: Tomorrow.io v4 (when WEATHER_PROVIDER=tomorrow_io) or IMD (when WEATHER_PROVIDER=imd).
     """
-    provider_name = os.getenv("WEATHER_PROVIDER", "tomorrow_io").lower().strip()
+    provider_name = os.getenv("WEATHER_PROVIDER", "open_meteo").lower().strip()
     if provider_name == "imd":
         return IMDProvider()
-    if provider_name == "open_meteo":
-        # Explicit opt-in to the free keyless provider
-        return OpenMeteoProvider()
-    # Default: Tomorrow.io
-    return TomorrowIOProvider()
+    if provider_name == "tomorrow_io":
+        return TomorrowIOProvider()
+    # Default: Open-Meteo
+    return OpenMeteoProvider()
 
 
 def get_active_provider_name() -> str:

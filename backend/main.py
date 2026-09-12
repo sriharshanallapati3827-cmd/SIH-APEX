@@ -1,7 +1,11 @@
+import os
+from pathlib import Path
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
 # Load environment variables before starting app
+_env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=_env_path)
 load_dotenv()
 
 from routes.weather import router as weather_router

@@ -316,7 +316,8 @@ TIMING_WORDS = {
     'at', 'by', 'on', 'in', 'around', 'driving', 'drive', 'travel', 'trip', 'going',
     'road', 'flight', 'car', 'bus', 'bike', 'motorcycle', 'am', 'pm', 'please',
     'what', 'is', 'the', 'how', 'about', 'weather', 'forecast', 'plan', 'detailed',
-    'right', 'now', 'give', 'me', 'tell', 'want', 'need', 'accurate', 'pls'
+    'right', 'now', 'give', 'me', 'tell', 'want', 'need', 'accurate', 'pls',
+    'current', 'currently', 'live', 'like', 'info', 'report', 'check', 'show'
 }
 
 def clean_location_token(loc_str: str) -> str:
@@ -458,7 +459,7 @@ def chat_with_gemini(request: ChatRequest):
         "question": message,
         "mode": mode,
         "answer": gemini_answer,
-        "source": "Google Gemini Intelligence + Tomorrow.io Weather Telemetry",
+        "source": "Google Gemini Intelligence + Open-Meteo Weather Telemetry",
         "weather_telemetry": weather_ctx,
         "conversation_history": updated_history,   # Frontend sends this back next turn
     }

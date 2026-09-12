@@ -5,10 +5,26 @@ from fastapi import HTTPException
 from .base import BaseWeatherProvider
 
 
+WMO_WEATHER_MAP = {
+    0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
+    45: "Fog", 48: "Depositing Rime Fog",
+    51: "Light Drizzle", 53: "Moderate Drizzle", 55: "Dense Drizzle",
+    56: "Light Freezing Drizzle", 57: "Dense Freezing Drizzle",
+    61: "Slight Rain", 63: "Moderate Rain", 65: "Heavy Rain",
+    66: "Light Freezing Rain", 67: "Heavy Freezing Rain",
+    71: "Slight Snow Fall", 73: "Moderate Snow Fall", 75: "Heavy Snow Fall",
+    77: "Snow Grains",
+    80: "Slight Rain Showers", 81: "Moderate Rain Showers", 82: "Violent Rain Showers",
+    85: "Slight Snow Showers", 86: "Heavy Snow Showers",
+    95: "Thunderstorm", 96: "Thunderstorm with Slight Hail", 99: "Thunderstorm with Heavy Hail"
+}
+
+
 class OpenMeteoProvider(BaseWeatherProvider):
     """
-    Active MVP Weather Provider using Open-Meteo API.
-    Provides free, keyless global & Indian weather data, forecasts, and condition-derived advisories.
+    Active Weather Provider using Open-Meteo API.
+    Provides 100% free, keyless global & Indian weather data, forecasts, and condition-derived advisories.
+    Reliable: 10,000 requests/day, sub-second latency, zero API-key rate-limit headaches.
     """
 
     @property
@@ -18,14 +34,17 @@ class OpenMeteoProvider(BaseWeatherProvider):
     def get_current_weather(self, latitude: float, longitude: float) -> Dict[str, Any]:
         """
         Fetch current weather metrics from Open-Meteo including:
-        temperature, apparent temperature, humidity, precipitation, rain, weather_code, wind speed, wind direction.
+        temperature, apparent temperature, humidity, precipitation, rain, weather_code,
+        wind speed, wind direction, surface pressure, and UV index.
         """
         url = (
             "https://api.open-meteo.com/v1/forecast"
             f"?latitude={latitude}"
             f"&longitude={longitude}"
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,"
-            "precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m"
+            "precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m,"
+            "surface_pressure,uv_index,is_day"
+            "&timezone=auto"
         )
         try:
             response = requests.get(url, timeout=10)
@@ -42,6 +61,18 @@ class OpenMeteoProvider(BaseWeatherProvider):
             )
 
         data = response.json()
+        current = data.get("current", {})
+        code = current.get("weather_code", 0)
+
+        # Populate universal normalized aliases so every consumer gets consistent fields
+        current["temperature"] = current.get("temperature_2m")
+        current["humidity"] = current.get("relative_humidity_2m")
+        current["wind_speed"] = current.get("wind_speed_10m")
+        current["feels_like"] = current.get("apparent_temperature")
+        current["condition"] = WMO_WEATHER_MAP.get(code, "Partly Cloudy")
+        current["weather_description"] = current["condition"]
+        current["pressure"] = current.get("surface_pressure")
+
         data["source"] = self.name
         return data
 

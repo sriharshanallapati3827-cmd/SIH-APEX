@@ -32,6 +32,7 @@ const state = {
   conversationHistory: [],      // [{role:'user'|'model', text:'...'}] — sent to Gemini for memory
   currentSessionId:   null,     // Active localStorage session ID
   sessionTitle:       null,     // Auto-generated from first user message
+  userLocation:       null,     // { lat: number, lon: number, city: string }
 };
 
 /* =============================================================================
@@ -716,6 +717,8 @@ async function generateResponseAsync(query, mode, lang) {
           message: query,
           mode: mode,
           lang: lang,
+          latitude: state.userLocation?.lat ?? null,
+          longitude: state.userLocation?.lon ?? null,
           conversation_history: state.conversationHistory   // ← full memory sent every turn
         })
       });
@@ -1038,7 +1041,9 @@ function extractCityFromQuery(query) {
    MARKDOWN PARSER & HELPERS
    ============================================================================= */
 function formatMarkdown(text) {
-  // 1. Extract and preserve multiline fenced code blocks (```python ... ```)
+  if (!text) return '';
+
+  // 1. Extract and preserve multiline fenced code blocks (```lang ... ```)
   const codeBlocks = [];
   let processed = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
     const idx = codeBlocks.length;
@@ -1055,28 +1060,58 @@ function formatMarkdown(text) {
     return `%%%CODEBLOCK_${idx}%%%`;
   });
 
-  // 2. Inline styling and tables
+  // 2. Headings: ### and ## and #
+  processed = processed
+    .replace(/^### (.*$)/gim, '<h3 class="ai-md-h3" style="font-size:1.02rem;color:#bae6fd;margin:14px 0 6px;font-weight:600;">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="ai-md-h2" style="font-size:1.18rem;color:#a8c7fa;margin:18px 0 8px;font-weight:700;letter-spacing:-0.01em;">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="ai-md-h1" style="font-size:1.3rem;color:#e3e3e3;margin:20px 0 10px;font-weight:700;">$1</h1>');
+
+  // 3. Horizontal rules
+  processed = processed.replace(/^---$/gim, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.12);margin:16px 0;">');
+
+  // 4. Blockquotes: > quote
+  processed = processed.replace(/^> (.*$)/gim, '<blockquote style="border-left:3px solid #a8c7fa;padding:6px 12px;margin:10px 0;background:rgba(168,199,250,0.06);border-radius:0 6px 6px 0;">$1</blockquote>');
+
+  // 5. Bold & Inline Code
   processed = processed
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.85em;font-family:monospace;color:#fca5a5;">$1</code>')
-    .replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g, (match) => {
-      const lines   = match.trim().split('\n');
-      const headers = lines[0].split('|').filter(c => c.trim())
-        .map(c => `<th style="padding:6px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);color:#a8c7fa;font-size:0.8rem;">${c.trim()}</th>`).join('');
-      const rows = lines.slice(2).map(line => {
-        const cells = line.split('|').filter(c => c.trim())
-          .map(c => `<td style="padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">${c.trim()}</td>`).join('');
-        return `<tr>${cells}</tr>`;
-      }).join('');
-      return `<div style="overflow-x:auto;margin:12px 0;"><table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border-radius:8px;"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
-    })
-    .replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>')
-    .replace(/<p>• (.+?)<\/p>/g, '<li style="margin:4px 0;padding-left:4px;">$1</li>')
-    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul style="list-style:disc;padding-left:20px;margin:8px 0;">$1</ul>')
-    .replace(/<p><\/p>/g, '');
+    .replace(/`([^`]+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.85em;font-family:monospace;color:#fca5a5;">$1</code>');
 
-  // 3. Re-inject code blocks
+  // 6. Bullet lists (* item, - item, * - item, or • item)
+  processed = processed.replace(/^[\s]*[\*\-\•][\*\-\•\s]*\s+(.+)$/gim, '<li style="margin:4px 0;padding-left:4px;line-height:1.55;">$1</li>');
+  // Group adjacent <li> into <ul>
+  processed = processed.replace(/((?:<li[\s\S]*?<\/li>\n?)+)/g, '<ul style="list-style:disc;padding-left:22px;margin:10px 0;">$1</ul>');
+
+  // 7. Inline italics (only match *word* that is not at the start of a tag or bullet)
+  processed = processed.replace(/(?<![<a-zA-Z0-9])\*([^\*\n]+?)\*(?![a-zA-Z0-9>])/g, '<em>$1</em>');
+
+  // 8. Markdown Tables
+  processed = processed.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g, (match) => {
+    const lines   = match.trim().split('\n');
+    const headers = lines[0].split('|').filter(c => c.trim())
+      .map(c => `<th style="padding:6px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);color:#a8c7fa;font-size:0.8rem;">${c.trim()}</th>`).join('');
+    const rows = lines.slice(2).map(line => {
+      const cells = line.split('|').filter(c => c.trim())
+        .map(c => `<td style="padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">${c.trim()}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    return `<div style="overflow-x:auto;margin:12px 0;"><table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border-radius:8px;"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  });
+
+  // 9. Paragraph wrapping: split on double newlines without breaking structured HTML blocks
+  const blocks = processed.split(/\n\n+/);
+  processed = blocks.map(block => {
+    const b = block.trim();
+    if (!b) return '';
+    if (b.startsWith('<h1') || b.startsWith('<h2') || b.startsWith('<h3') ||
+        b.startsWith('<ul') || b.startsWith('<pre') || b.startsWith('<blockquote') ||
+        b.startsWith('<hr') || b.startsWith('<div') || b.startsWith('%%%CODEBLOCK_')) {
+      return b;
+    }
+    return `<p style="margin:8px 0;line-height:1.65;">${b.replace(/\n/g, '<br>')}</p>`;
+  }).join('\n');
+
+  // 10. Re-inject code blocks
   codeBlocks.forEach((block, idx) => {
     processed = processed.replace(`<p>%%%CODEBLOCK_${idx}%%%</p>`, block);
     processed = processed.replace(`%%%CODEBLOCK_${idx}%%%`, block);
@@ -1233,33 +1268,10 @@ function initEventListeners() {
 
 /* =============================================================================
    LIVE HEADER WEATHER CHIP — Fetches GPS → Open-Meteo → displays iOS-style
+   Includes instant regional fallback so the chip ALWAYS shows live weather even if GPS is denied
    ============================================================================= */
-async function initHeaderWeatherChip() {
-  if (!navigator.geolocation) {
-    if (hwcSpinner) hwcSpinner.style.display = 'none';
-    return;
-  }
+async function renderChipWithLocation(lat, lon, cityLabel) {
   try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 300000 })
-    );
-    const { latitude: lat, longitude: lon } = pos.coords;
-
-    // Reverse geocode city name via Nominatim (free, no key required)
-    let cityLabel = 'My Location';
-    try {
-      const nomRes = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en&zoom=10`,
-        { headers: { 'User-Agent': 'WeatherGPT/1.0' }, signal: AbortSignal.timeout(5000) }
-      );
-      if (nomRes.ok) {
-        const nomJson = await nomRes.json();
-        const addr = nomJson.address || {};
-        cityLabel = addr.city || addr.town || addr.village || addr.county || addr.state_district || 'My Location';
-      }
-    } catch (_) { /* silently use fallback */ }
-
-    // Fetch weather from Open-Meteo
     const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
     const wxRes  = await fetch(wxUrl);
     if (!wxRes.ok) throw new Error('Weather fetch failed');
@@ -1269,31 +1281,68 @@ async function initHeaderWeatherChip() {
 
     const temp    = Math.round(curr.temperature_2m);
     const feelsLk = Math.round(curr.apparent_temperature);
-    const high    = daily ? Math.round(daily.temperature_2m_max[0]) : feelsLk + 2;
-    const low     = daily ? Math.round(daily.temperature_2m_min[0]) : temp - 4;
+    const high    = daily && daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : feelsLk + 2;
+    const low     = daily && daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : temp - 4;
     const wmo     = getWmoWeatherInfo(curr.weather_code);
 
+    // Save to global state so subsequent queries know user's coordinates!
+    state.userLocation = { lat, lon, city: cityLabel };
+
     // Populate chip
-    hwcCityName.textContent  = cityLabel;
-    hwcCondIcon.textContent  = wmo.icon;
-    hwcBigTemp.textContent   = `${temp}°`;
-    hwcCondText.textContent  = wmo.desc.split(' ·')[0];
-    hwcHLText.textContent    = `H:${high}° L:${low}°`;
+    if (hwcCityName) hwcCityName.textContent  = cityLabel;
+    if (hwcCondIcon) hwcCondIcon.textContent  = wmo.icon;
+    if (hwcBigTemp)  hwcBigTemp.textContent   = `${temp}°`;
+    if (hwcCondText) hwcCondText.textContent  = wmo.desc.split(' ·')[0];
+    if (hwcHLText)   hwcHLText.textContent    = `H:${high}° L:${low}°`;
 
-    hwcSpinner.style.display = 'none';
-    hwcReady.style.display   = 'block';
+    if (hwcSpinner) hwcSpinner.style.display = 'none';
+    if (hwcReady)   hwcReady.style.display   = 'block';
 
-    // Click chip → ask weather for this location
-    headerWeatherChip.addEventListener('click', () => {
-      messageInput.value = `What is the weather right now at my location (${lat.toFixed(3)}, ${lon.toFixed(3)}) — ${cityLabel}?`;
-      updateSendBtnState();
-      messageInput.focus();
-    });
-
+    if (headerWeatherChip) {
+      headerWeatherChip.onclick = () => {
+        messageInput.value = `What is the current weather in ${cityLabel}?`;
+        updateSendBtnState();
+        messageInput.focus();
+      };
+    }
   } catch (err) {
-    console.warn('[WeatherChip] GPS or fetch error:', err.message);
+    console.warn('[WeatherChip] Render error:', err.message);
     if (hwcSpinner) hwcSpinner.style.display = 'none';
   }
+}
+
+async function initHeaderWeatherChip() {
+  let lat = 28.6139;
+  let lon = 77.2090;
+  let cityLabel = 'New Delhi';
+
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 300000 })
+      );
+      lat = pos.coords.latitude;
+      lon = pos.coords.longitude;
+      cityLabel = 'My Location';
+
+      // Reverse geocode city name via Nominatim (free, no key required)
+      try {
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en&zoom=10`,
+          { headers: { 'User-Agent': 'WeatherGPT/1.0' }, signal: AbortSignal.timeout(4000) }
+        );
+        if (nomRes.ok) {
+          const nomJson = await nomRes.json();
+          const addr = nomJson.address || {};
+          cityLabel = addr.city || addr.town || addr.village || addr.state_district || addr.county || 'My Location';
+        }
+      } catch (_) { /* silently use fallback label */ }
+    } catch (geoErr) {
+      console.info('[WeatherChip] Browser GPS unavailable, using regional default:', geoErr.message);
+    }
+  }
+
+  await renderChipWithLocation(lat, lon, cityLabel);
 }
 
 /* =============================================================================
