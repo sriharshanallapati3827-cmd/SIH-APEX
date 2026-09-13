@@ -725,7 +725,11 @@ async function generateResponseAsync(query, mode, lang) {
   const MAX_RETRIES = 3;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const backendRes = await fetch('http://localhost:8000/api/chat', {
+      const API_BASE_URL = window.API_BASE_URL 
+  || (['localhost', '127.0.0.1'].includes(window.location.hostname) 
+      ? 'http://localhost:8000' 
+      : 'https://YOUR-BACKEND-NAME.onrender.com');
+      const backendRes = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
