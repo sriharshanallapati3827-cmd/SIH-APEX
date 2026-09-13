@@ -786,6 +786,15 @@ async function generateResponseAsync(query, mode, lang) {
             };
           }
 
+          // Persist latest telemetry into client-side IndexedDB Edge Cache
+          if (window.WeatherOfflineStore) {
+            window.WeatherOfflineStore.saveTelemetry(
+              data.weather_telemetry?.location || query,
+              data.weather_telemetry,
+              answer
+            );
+          }
+
           return { text: answer, card: card };
         }
       } else if (backendRes.status === 503 || backendRes.status === 429) {
@@ -804,6 +813,32 @@ async function generateResponseAsync(query, mode, lang) {
       }
     }
     break; // exit retry loop on non-retryable error
+  }
+
+  // ── 0.5 OFFLINE EDGE & EMERGENCY SAFETY SOP FALLBACK (IndexedDB) ──
+  if (window.WeatherOfflineStore) {
+    // A. Check for pre-verified official emergency guidelines (Cyclone, Flood, Heatwave, etc.)
+    const emergency = await window.WeatherOfflineStore.findEmergencyGuideline(query);
+    if (emergency) {
+      const guideText = `🚨 **OFFLINE EMERGENCY SAFETY PROTOCOL (${emergency.severity})**\n\n` +
+        `### ${emergency.title}\n\n` +
+        `*Offline Edge Mode: Displaying official emergency action protocol stored on device:*\n\n` +
+        emergency.guidelines.map((g, i) => `${i + 1}. ${g}`).join('\n\n') +
+        `\n\n---\n*Verified safety standard for NDMA / IMD disaster protocols.*`;
+      return { text: guideText, card: null };
+    }
+
+    // B. If network is offline, retrieve last synced weather telemetry from IndexedDB
+    if (!navigator.onLine) {
+      const cached = await window.WeatherOfflineStore.getLatestTelemetry();
+      if (cached && cached.answer) {
+        const syncDate = new Date(cached.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const offlineText = `📡 **OFFLINE EDGE MODE (Cached Telemetry — Synced ${syncDate})**\n\n` +
+          `*Your device is currently offline. Showing last synced forecast for **${cached.location}**:*\n\n` +
+          cached.answer;
+        return { text: offlineText, card: null };
+      }
+    }
   }
 
   // ── 1. HINDI OUTPUT ──
@@ -1639,3 +1674,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Save session on page unload
 window.addEventListener('beforeunload', saveCurrentSession);
+
+// ── PWA & OFFLINE CONNECTIVITY LISTENERS ─────────────────────────────────────
+window.addEventListener('online', () => {
+  console.log('[PWA] Network restored: Online');
+  showStatusToast('🌐 Internet connection restored. Live AI & radar active.', 'success');
+});
+
+window.addEventListener('offline', () => {
+  console.log('[PWA] Network lost: Operating in Edge Offline Mode');
+  showStatusToast('📡 Offline Mode: Using local Edge IndexedDB & cached forecasts.', 'warning');
+});
+
+function showStatusToast(msg, type = 'info') {
+  let toast = document.getElementById('pwaToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'pwaToast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: ${type === 'warning' ? '#b45309' : '#1e293b'};
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => {
+    if (toast) toast.style.opacity = '0';
+  }, 4000);
+}

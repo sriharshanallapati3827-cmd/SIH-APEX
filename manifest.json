@@ -1,0 +1,48 @@
+﻿{
+  "name": "WeatherGPT — Conversational Weather Intelligence",
+  "short_name": "WeatherGPT",
+  "description": "Real-time AI weather intelligence, impact-based forecasts, and offline emergency guidance for India.",
+  "start_url": "/chat.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0d14",
+  "theme_color": "#0a0d14",
+  "categories": ["weather", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Weather Chat",
+      "short_name": "Chat",
+      "description": "Ask AI about current weather and forecasts",
+      "url": "/chat.html",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Severe Alerts & Radar",
+      "short_name": "Alerts",
+      "description": "Check active weather hazards and advisories",
+      "url": "/chat.html?mode=alert",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
