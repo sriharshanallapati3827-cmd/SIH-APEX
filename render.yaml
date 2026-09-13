@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sih-apex-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          # Set this in Render Dashboard → Environment → Secret
+      - key: WEATHER_PROVIDER
+        value: open_meteo
+      - key: TOMORROW_IO_API_KEY
+        sync: false          # Set this in Render Dashboard → Environment → Secret
+      - key: PORT
+        value: "8000"

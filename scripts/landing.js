@@ -447,7 +447,7 @@ function switchHeroVideo(src, activeBtn) {
 }
 
 btnVidDrone?.addEventListener('click', () => switchHeroVideo('sources/weather_drone_4k.mov', btnVidDrone));
-btnVidMonsoon?.addEventListener('click', () => switchHeroVideo('sources/monsoon_landscape.mov', btnVidMonsoon));
+btnVidMonsoon?.addEventListener('click', () => switchHeroVideo('sources/weather_drone_4k.mov', btnVidMonsoon));
 
 // Modal video tabs: switch between Drone 4K and Monsoon Valley
 modalTabDrone?.addEventListener('click', () => {
@@ -463,7 +463,7 @@ modalTabMonsoon?.addEventListener('click', () => {
   if (!demoVideo) return;
   modalTabMonsoon.classList.add('active');
   modalTabDrone?.classList.remove('active');
-  demoVideo.src = 'sources/monsoon_landscape.mov';
+  demoVideo.src = 'sources/weather_drone_4k.mov';
   if (modalCaption) modalCaption.textContent = 'WeatherGPT — Northeast Monsoon Valley & Inflow Dynamics · SIH 2026';
   demoVideo.play().catch(e => console.warn(e));
 });
