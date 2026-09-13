@@ -455,15 +455,20 @@ def chat_with_gemini(request: ChatRequest):
     weather_ctx = resolve_weather_telemetry(message, mode=mode, lat=request.latitude, lon=request.longitude)
 
     # ── SPATIAL SAFETY CIRCUIT BREAKER (PostGIS / Deterministic Guardrail) ──
-    # If user coordinates or the resolved city fall within an active disaster zone,
+    # Check BOTH the queried city location AND the user's physical GPS device location.
+    # If EITHER coordinate point falls within an active disaster hazard polygon,
     # FREEZE generative LLM text synthesis and return 100% pre-verified official bulletin!
-    target_lat = request.latitude if (request.latitude is not None and request.latitude != 0) else (weather_ctx and weather_ctx.get("latitude"))
-    target_lon = request.longitude if (request.longitude is not None and request.longitude != 0) else (weather_ctx and weather_ctx.get("longitude"))
+    points_to_check = []
+    if weather_ctx and weather_ctx.get("latitude") and weather_ctx.get("longitude"):
+        points_to_check.append((weather_ctx["latitude"], weather_ctx["longitude"]))
+    if request.latitude is not None and request.longitude is not None:
+        if abs(request.latitude) > 0.001 or abs(request.longitude) > 0.001:
+            points_to_check.append((request.latitude, request.longitude))
 
-    if target_lat is not None and target_lon is not None:
-        disaster_alert = check_spatial_circuit_breaker(target_lat, target_lon)
+    for chk_lat, chk_lon in points_to_check:
+        disaster_alert = check_spatial_circuit_breaker(chk_lat, chk_lon)
         if disaster_alert:
-            bulletin = format_deterministic_bulletin(disaster_alert, float(target_lat), float(target_lon))
+            bulletin = format_deterministic_bulletin(disaster_alert, float(chk_lat), float(chk_lon))
             updated_history = history + [
                 {"role": "user",  "text": message},
                 {"role": "model", "text": bulletin},
