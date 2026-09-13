@@ -465,8 +465,14 @@ def chat_with_gemini(request: ChatRequest):
         if abs(request.latitude) > 0.001 or abs(request.longitude) > 0.001:
             points_to_check.append((request.latitude, request.longitude))
 
+    cur_telemetry = (weather_ctx and weather_ctx.get("current_telemetry")) or {}
     for chk_lat, chk_lon in points_to_check:
-        disaster_alert = check_spatial_circuit_breaker(chk_lat, chk_lon)
+        disaster_alert = check_spatial_circuit_breaker(
+            chk_lat,
+            chk_lon,
+            current_telemetry=cur_telemetry,
+            query_text=message
+        )
         if disaster_alert:
             bulletin = format_deterministic_bulletin(disaster_alert, float(chk_lat), float(chk_lon))
             updated_history = history + [

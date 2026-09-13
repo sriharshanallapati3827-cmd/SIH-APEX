@@ -205,15 +205,31 @@ def init_postgis_database() -> Dict[str, Any]:
 
 
 
-# ── 4. MAIN CIRCUIT BREAKER GATEWAY ──────────────────────────────────────────
-def check_spatial_circuit_breaker(lat: Optional[float], lon: Optional[float]) -> Optional[Dict[str, Any]]:
+# ── PARAMETRIC HAZARD THRESHOLDS ─────────────────────────────────────────────
+HAZARD_THRESHOLDS = {
+    "min_precipitation_mm": 40.0,       # Heavy downpour (> 40 mm)
+    "min_wind_kmh": 65.0,               # Gale-force winds (> 65 km/h)
+    "min_temp_heatwave_c": 43.5,        # Severe heatwave (> 43.5°C)
+    "severe_weather_codes": [65, 67, 75, 82, 95, 96, 99] # Violent showers, thunderstorms, hail
+}
+
+
+# ── 4. MAIN CIRCUIT BREAKER GATEWAY (Two-Factor Parametric Verification) ─────
+def check_spatial_circuit_breaker(
+    lat: Optional[float],
+    lon: Optional[float],
+    current_telemetry: Optional[Dict[str, Any]] = None,
+    query_text: str = ""
+) -> Optional[Dict[str, Any]]:
     """
-    Primary Entry Point for Spatial Safety Guardrail.
+    Two-Factor Spatial Safety Guardrail:
     
-    1. If lat/lon are missing or invalid, returns None (no circuit breaker).
-    2. Attempts PostGIS query if database is configured.
-    3. If no DB or DB returns None, checks registered in-memory disaster polygons.
-    4. If coordinates lie inside any active disaster polygon, returns the hazard payload.
+    Factor 1: Spatial Intersection (ST_Contains) — Is the location within an active disaster polygon?
+    Factor 2: Parametric Hazard Verification — Do live meteorological parameters ACTUALLY 
+              meet/exceed emergency thresholds, OR did the user explicitly inquire about a disaster?
+              
+    If spatial check passes but live metrics are mild (e.g. 26°C with 0.1 mm drizzle),
+    the system permits normal generative AI responses to avoid false alarms and unnecessary panics.
     """
     if lat is None or lon is None:
         return None
@@ -228,25 +244,70 @@ def check_spatial_circuit_breaker(lat: Optional[float], lon: Optional[float]) ->
     if abs(lat) < 0.001 and abs(lon) < 0.001:
         return None
 
-    # Step A: Query PostGIS if available
-    db_result = _query_postgis_circuit_breaker(lat, lon)
-    if db_result:
-        return db_result
+    # Step A: Spatial Check (PostGIS or in-memory)
+    matched_zone = _query_postgis_circuit_breaker(lat, lon)
+    if not matched_zone:
+        for zone in _active_zones:
+            coords = zone.get("polygon_coords")
+            if coords and point_in_polygon(lon, lat, coords):
+                matched_zone = {
+                    "alert_id": zone.get("alert_id"),
+                    "event_name": zone.get("event_name"),
+                    "severity": zone.get("severity", "CRITICAL"),
+                    "issuing_authority": zone.get("issuing_authority", "NDMA/IMD"),
+                    "advisory_text": zone.get("advisory_text"),
+                    "valid_until": zone.get("valid_until"),
+                }
+                break
 
-    # Step B: In-Memory Spatial Ray-Casting
-    for zone in _active_zones:
-        coords = zone.get("polygon_coords")
-        if coords and point_in_polygon(lon, lat, coords):
-            return {
-                "alert_id": zone.get("alert_id"),
-                "event_name": zone.get("event_name"),
-                "severity": zone.get("severity", "CRITICAL"),
-                "issuing_authority": zone.get("issuing_authority", "NDMA/IMD"),
-                "advisory_text": zone.get("advisory_text"),
-                "valid_until": zone.get("valid_until"),
-            }
+    if not matched_zone:
+        return None
 
-    return None
+    # Step B: Parametric Telemetry Verification (if telemetry is available)
+    if current_telemetry:
+        precip = float(current_telemetry.get("precipitation") or current_telemetry.get("rain") or 0.0)
+        wind = float(current_telemetry.get("wind_speed") or current_telemetry.get("wind_speed_10m") or 0.0)
+        temp = float(current_telemetry.get("temperature") or current_telemetry.get("temperature_2m") or 25.0)
+        wcode = int(current_telemetry.get("weather_code") or current_telemetry.get("weathercode") or 0)
+        active_alert = current_telemetry.get("alert")
+
+        is_heavy_rain = precip >= HAZARD_THRESHOLDS["min_precipitation_mm"]
+        is_gale_wind = wind >= HAZARD_THRESHOLDS["min_wind_kmh"]
+        is_heatwave = temp >= HAZARD_THRESHOLDS["min_temp_heatwave_c"]
+        is_severe_code = wcode in HAZARD_THRESHOLDS["severe_weather_codes"]
+        has_official_alert = bool(active_alert)
+
+        # Check if user query explicitly asked about disaster/emergency
+        q_lower = (query_text or "").lower()
+        emergency_keywords = [
+            "cyclone", "flood", "deluge", "evacuat", "hazard", "red alert",
+            "emergency", "warning", "danger", "safe to travel", "crisis", "disaster", "inundation"
+        ]
+        is_emergency_query = any(kw in q_lower for kw in emergency_keywords)
+
+        # If live telemetry is mild and user did not ask an emergency question:
+        # DO NOT false-trigger the emergency alarm! Allow normal weather advice!
+        if not (is_heavy_rain or is_gale_wind or is_heatwave or is_severe_code or has_official_alert or is_emergency_query):
+            return None
+
+        # Build trigger explanation for the emergency bulletin
+        triggers = []
+        if is_heavy_rain:
+            triggers.append(f"Extreme Precipitation: {precip} mm/h (Threshold: {HAZARD_THRESHOLDS['min_precipitation_mm']} mm)")
+        if is_gale_wind:
+            triggers.append(f"Severe Gale Winds: {wind} km/h (Threshold: {HAZARD_THRESHOLDS['min_wind_kmh']} km/h)")
+        if is_severe_code:
+            triggers.append(f"Severe Weather Code: WMO {wcode} (Violent storm/hail)")
+        if is_heatwave:
+            triggers.append(f"Extreme Heat: {temp}°C")
+        if has_official_alert:
+            triggers.append(f"IMD/NDMA Active Bulletin: {active_alert}")
+        if is_emergency_query and not triggers:
+            triggers.append("Direct Emergency Safety Protocol Query")
+
+        matched_zone["trigger_metrics"] = " | ".join(triggers)
+
+    return matched_zone
 
 
 # ── 5. BULLETIN FORMATTER ────────────────────────────────────────────────────
@@ -260,6 +321,8 @@ def format_deterministic_bulletin(disaster: Dict[str, Any], lat: float, lon: flo
     authority = disaster.get("issuing_authority", "National Disaster Management Authority (NDMA)")
     advisory = disaster.get("advisory_text", "")
     alert_id = disaster.get("alert_id", "EMERGENCY-01")
+    trigger_metrics = disaster.get("trigger_metrics", "")
+    trigger_line = f"**Validated Trigger Conditions:** {trigger_metrics}\n\n" if trigger_metrics else ""
 
     bulletin = (
         f"🚨 **DETERMINISTIC SAFETY CIRCUIT BREAKER ACTIVATED [{severity}]**\n\n"
@@ -267,6 +330,7 @@ def format_deterministic_bulletin(disaster: Dict[str, Any], lat: float, lon: flo
         f"**Issuing Authority:** {authority}\n"
         f"**Hazard Classification:** {event_name}\n"
         f"**Trigger Coordinates:** Latitude {lat:.4f}°N, Longitude {lon:.4f}°E\n\n"
+        f"{trigger_line}"
         f"---\n\n"
         f"### 🛑 MANDATORY DISASTER PROTOCOL & LIFE SAFETY ACTIONS:\n\n"
         f"{advisory}\n\n"
