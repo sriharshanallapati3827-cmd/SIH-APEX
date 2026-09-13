@@ -12,10 +12,15 @@ from routes.weather import router as weather_router
 from routes.forecast import router as forecast_router
 from routes.alerts import router as alerts_router
 from routes.ai import router as ai_router
+from services.safety_guardrail import init_postgis_database
 
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="WeatherGPT", version="1.0.0")
+
+@app.on_event("startup")
+def on_startup():
+    init_postgis_database()
 
 # Enable CORS for frontend website
 app.add_middleware(

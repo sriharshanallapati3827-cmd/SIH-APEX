@@ -1,4 +1,4 @@
-﻿"""
+"""
 ==============================================================================
 WeatherGPT Deterministic Emergency Safety Guardrail (PostGIS Spatial Engine)
 ==============================================================================
@@ -143,6 +143,66 @@ def _query_postgis_circuit_breaker(lat: float, lon: float) -> Optional[Dict[str,
         return None
 
     return None
+
+
+def init_postgis_database() -> Dict[str, Any]:
+    """
+    Auto-initializes the PostGIS extension and active_disaster_zones table
+    whenever a DATABASE_URL / POSTGIS_URL is configured.
+    Runs automatically on application startup.
+    """
+    db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGIS_URL")
+    if not db_url:
+        return {"status": "skipped", "reason": "No DATABASE_URL configured (running in resilient in-memory mode)"}
+
+    try:
+        import psycopg2
+        # Ensure postgres:// is supported (Render sometimes passes postgres:// instead of postgresql://)
+        conn_str = db_url.replace("postgres://", "postgresql://", 1) if db_url.startswith("postgres://") else db_url
+        conn = psycopg2.connect(conn_str, connect_timeout=5)
+        conn.autocommit = True
+        try:
+            with conn.cursor() as cur:
+                # 1. Enable PostGIS
+                cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+                
+                # 2. Create Table
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS active_disaster_zones (
+                        id SERIAL PRIMARY KEY,
+                        alert_id VARCHAR(50) UNIQUE NOT NULL,
+                        event_name VARCHAR(100) NOT NULL,
+                        severity VARCHAR(20) NOT NULL,
+                        issuing_authority VARCHAR(50) NOT NULL DEFAULT 'NDMA/IMD',
+                        advisory_text TEXT NOT NULL,
+                        boundary GEOMETRY(Polygon, 4326) NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        valid_until TIMESTAMP WITH TIME ZONE NOT NULL
+                    );
+                """)
+
+                # 3. Create GIST Spatial Index
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_disaster_boundary ON active_disaster_zones USING GIST (boundary);")
+
+                # 4. Seed benchmarks if empty
+                cur.execute("SELECT COUNT(*) FROM active_disaster_zones;")
+                count = cur.fetchone()[0]
+                if count == 0:
+                    for zone in BENCHMARK_DISASTER_ZONES:
+                        coords_str = ", ".join(f"{p[0]} {p[1]}" for p in zone["polygon_coords"])
+                        wkt = f"POLYGON(({coords_str}))"
+                        cur.execute("""
+                            INSERT INTO active_disaster_zones (alert_id, event_name, severity, issuing_authority, advisory_text, boundary, valid_until)
+                            VALUES (%s, %s, %s, %s, %s, ST_GeomFromText(%s, 4326), NOW() + INTERVAL '7 days')
+                            ON CONFLICT (alert_id) DO NOTHING;
+                        """, (zone["alert_id"], zone["event_name"], zone["severity"], zone["issuing_authority"], zone["advisory_text"], wkt))
+            return {"status": "success", "message": "PostGIS schema and active disaster polygons initialized successfully."}
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.warning(f"[SafetyGuardrail] Failed to auto-init PostGIS database: {e}")
+        return {"status": "error", "error": str(e)}
+
 
 
 # ── 4. MAIN CIRCUIT BREAKER GATEWAY ──────────────────────────────────────────
