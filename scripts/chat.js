@@ -728,7 +728,7 @@ async function generateResponseAsync(query, mode, lang) {
       const API_BASE_URL = window.API_BASE_URL 
   || (['localhost', '127.0.0.1'].includes(window.location.hostname) 
       ? 'http://localhost:8000' 
-      : 'https://YOUR-BACKEND-NAME.onrender.com');
+      : 'https://sih-apex-backend.onrender.com');
       const backendRes = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
