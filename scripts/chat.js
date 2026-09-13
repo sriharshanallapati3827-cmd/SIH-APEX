@@ -1190,6 +1190,12 @@ function formatMarkdown(text) {
     return `\n<div class="ai-table-wrap" style="overflow-x:auto;margin:16px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(15,23,42,0.65);box-shadow:0 4px 12px rgba(0,0,0,0.2);"><table style="width:100%;border-collapse:collapse;text-align:left;"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div>\n`;
   });
 
+  // 4.5 Normalize verdicts and callouts so they reliably render inside the styled callout box
+  // Handles cases where Gemini outputs verdict with a bullet, or without >, e.g.:
+  // '• 🚲 **COMMUTE VERDICT: ...**' or '• > 🚲 **COMMUTE VERDICT: ...**' or '• 🚲 **Commute:**'
+  processed = processed.replace(/^[ \t]*(?:[\*\-\•]\s*)?((?:🚲|🚗|🌾|⚓|⚠️|🛑)\s*\*\*[^\*\n]*(?:VERDICT|TIER|ACTION|Commute|Travel|Field|Sea)[^\*\n]*\*\*.*)$/gim, '> $1');
+  processed = processed.replace(/^[ \t]*[\*\-\•]\s*>/gm, '>');
+
   // 5. Unified Blockquotes: group consecutive lines starting with > into one single callout card
   processed = processed.replace(/(?:^|\n)((?:[ \t]*>[ \t]?.*(?:\n|$))+)/g, (match, quoteBlock) => {
     const rawLines = quoteBlock
@@ -1200,8 +1206,8 @@ function formatMarkdown(text) {
     const content = rawLines
       .map(line => {
         let l = line.trim();
-        if (l.startsWith('- ')) {
-          return `<div style="margin:4px 0 4px 12px;display:flex;align-items:flex-start;gap:6px;"><span style="color:#38bdf8;">•</span><span>${l.slice(2)}</span></div>`;
+        if (l.startsWith('- ') || l.startsWith('• ')) {
+          return `<div style="margin:4px 0 4px 12px;display:flex;align-items:flex-start;gap:6px;"><span style="color:#38bdf8;">•</span><span>${l.replace(/^[\-\•]\s*/, '')}</span></div>`;
         }
         return `<div>${l}</div>`;
       })
