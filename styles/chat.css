@@ -638,6 +638,8 @@ html, body {
 /* Voice Button */
 .voice-btn {
   color: var(--gemini-text-secondary);
+  position: relative;   /* anchor the ::before pulse ring */
+  transition: color 0.2s, background 0.2s;
 }
 .voice-btn:hover {
   color: var(--gemini-blue-accent);
@@ -654,6 +656,20 @@ html, body {
 }
 .voice-btn.recording .voice-stop-icon {
   display: block;
+}
+/* Pulsing ring behind the button while recording — like Google's Gemini mic */
+.voice-btn.recording::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  animation: voicePulseRing 1.2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes voicePulseRing {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.7); opacity: 0;   }
 }
 
 /* Send Button */

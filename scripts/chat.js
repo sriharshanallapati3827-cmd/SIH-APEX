@@ -618,60 +618,222 @@ function setMode(modeKey) {
 }
 
 /* =============================================================================
-   VOICE RECORDER LOGIC (Web Speech API)
+   VOICE RECORDER — Web Speech API (no external API needed — runs 100% in browser)
+   ─────────────────────────────────────────────────────────────────────────────
+   DESIGN DECISIONS (senior dev notes):
+   · We create a FRESH SpeechRecognition instance each recording session.
+     Reusing the same instance across multiple starts causes InvalidStateError
+     on Chrome/Edge because the internal state machine doesn't reset cleanly.
+   · Web Audio API (AnalyserNode) drives the actual audio waveform bars in
+     real-time — they react to the user's voice volume, not just CSS animation.
+   · All error cases (permission denied, no speech, network) show a toast-style
+     message in the recording bar instead of silently failing.
+   · The mic button shows a pulsing ring while recording (CSS .recording class).
+   · Interim results are shown in the input live as the user speaks.
+   · When the user stops speaking (onend fires), the transcript auto-sends.
    ============================================================================= */
+
+/** Holds the Web Audio API objects for real-time waveform visualization */
+const _voice = {
+  audioCtx:    null,
+  analyser:    null,
+  sourceNode:  null,
+  mediaStream: null,
+  animFrameId: null,
+  waveBars:    null,   // NodeList of the 5 <span> elements in .audio-wave
+};
+
+/** Returns the current lang code for SpeechRecognition */
+function _getRecLang() {
+  return state.lang === 'hi' ? 'hi-IN'
+       : state.lang === 'te' ? 'te-IN'
+       : 'en-IN';
+}
+
+/**
+ * Starts Web Audio AnalyserNode → drives the 5 waveform bars in real time.
+ * Falls back gracefully if MediaDevices API is unavailable.
+ */
+async function _startWaveformVisualizer() {
+  try {
+    if (!_voice.waveBars) {
+      _voice.waveBars = document.querySelectorAll('.audio-wave span');
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _voice.mediaStream = stream;
+
+    _voice.audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    _voice.analyser  = _voice.audioCtx.createAnalyser();
+    _voice.analyser.fftSize = 32;
+    _voice.sourceNode = _voice.audioCtx.createMediaStreamSource(stream);
+    _voice.sourceNode.connect(_voice.analyser);
+
+    const dataArr = new Uint8Array(_voice.analyser.frequencyBinCount);
+
+    function drawFrame() {
+      _voice.animFrameId = requestAnimationFrame(drawFrame);
+      _voice.analyser.getByteFrequencyData(dataArr);
+      // Map the 5 bars across the low-frequency bins (0-4)
+      _voice.waveBars.forEach((bar, i) => {
+        const val = dataArr[i] || 0;            // 0–255
+        const h   = Math.max(4, (val / 255) * 24); // 4px–24px
+        bar.style.height  = h + 'px';
+        bar.style.opacity = 0.6 + (val / 255) * 0.4;
+        // Pause CSS animation so JS controls the bars
+        bar.style.animationPlayState = 'paused';
+      });
+    }
+    drawFrame();
+  } catch (_err) {
+    // MediaDevices unavailable (HTTP context, old browser) — CSS fallback kicks in
+  }
+}
+
+/**
+ * Tears down the Web Audio visualizer and releases the microphone.
+ */
+function _stopWaveformVisualizer() {
+  if (_voice.animFrameId) {
+    cancelAnimationFrame(_voice.animFrameId);
+    _voice.animFrameId = null;
+  }
+  if (_voice.sourceNode)  { try { _voice.sourceNode.disconnect(); } catch (_) {} _voice.sourceNode = null; }
+  if (_voice.audioCtx)    { try { _voice.audioCtx.close(); } catch (_) {}       _voice.audioCtx   = null; }
+  if (_voice.mediaStream) {
+    _voice.mediaStream.getTracks().forEach(t => t.stop());
+    _voice.mediaStream = null;
+  }
+  // Reset bars back to CSS-animated state
+  if (_voice.waveBars) {
+    _voice.waveBars.forEach(bar => {
+      bar.style.height              = '';
+      bar.style.opacity             = '';
+      bar.style.animationPlayState  = '';
+    });
+  }
+}
+
+/**
+ * Shows a brief error message inside the recording bar, then auto-hides it.
+ * @param {string} msg - Human-readable error text
+ */
+function _showVoiceError(msg) {
+  recLabel.textContent = msg;
+  recLabel.style.color = '#fca5a5';
+  recordingBar.classList.add('active');
+  setTimeout(() => {
+    recordingBar.classList.remove('active');
+    recLabel.style.color = '';
+    recLabel.textContent = 'Listening... speak your weather question';
+  }, 3000);
+}
+
+/**
+ * Initializes the mic button.
+ * Creates a FRESH SpeechRecognition instance every time the user clicks Record
+ * to avoid Chrome's InvalidStateError on second usage.
+ */
 function setupVoice() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
   if (!SpeechRec) {
+    // Browser doesn't support Web Speech API — hide button entirely
     voiceBtn.style.display = 'none';
     return;
   }
 
-  const rec = new SpeechRec();
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.lang = state.lang === 'hi' ? 'hi-IN' : state.lang === 'te' ? 'te-IN' : 'en-IN';
-
-  rec.onstart = () => {
-    state.isRecording = true;
-    voiceBtn.classList.add('recording');
-    recordingBar.classList.add('active');
-    recLabel.textContent = 'Listening... speak your weather question';
-  };
-
-  rec.onresult = (e) => {
-    let transcript = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      transcript += e.results[i][0].transcript;
-    }
-    messageInput.value = transcript;
-    updateSendBtnState();
-  };
-
-  rec.onerror = (e) => {
-    console.warn('[VoiceRec] Error:', e.error);
-    stopRecording();
-  };
-
-  rec.onend = () => {
-    stopRecording();
-    if (messageInput.value.trim().length > 0) {
-      sendMessage();
-    }
-  };
-
-  state.recognition = rec;
-
-  voiceBtn.addEventListener('click', () => {
+  // ── Click handler: toggle record / stop ──────────────────────────────────
+  voiceBtn.addEventListener('click', async () => {
     if (state.isRecording) {
-      state.recognition.stop();
-    } else {
-      try {
-        state.recognition.lang = state.lang === 'hi' ? 'hi-IN' : state.lang === 'te' ? 'te-IN' : 'en-IN';
-        state.recognition.start();
-      } catch (err) {
-        console.error(err);
+      // User clicked Stop — abort current session
+      if (state.recognition) {
+        try { state.recognition.abort(); } catch (_) {}
       }
+      stopRecording();
+      return;
+    }
+
+    // ── Start a new recording session ──────────────────────────────────────
+    // Create a fresh instance — prevents InvalidStateError on repeat clicks
+    const rec = new SpeechRec();
+    state.recognition = rec;
+
+    rec.continuous      = false;   // Stop after natural speech pause
+    rec.interimResults  = true;    // Show partial transcript live in input
+    rec.maxAlternatives = 1;
+    rec.lang            = _getRecLang();
+
+    // ── Event handlers ─────────────────────────────────────────────────────
+    rec.onstart = () => {
+      state.isRecording = true;
+      voiceBtn.classList.add('recording');
+      voiceBtn.setAttribute('aria-label', 'Stop recording');
+      voiceBtn.title = 'Stop recording';
+      recordingBar.classList.add('active');
+      recLabel.style.color = '';
+      recLabel.textContent = '🎙 Listening… speak your weather question';
+    };
+
+    rec.onresult = (e) => {
+      let interim  = '';
+      let finalTxt = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTxt += t;
+        } else {
+          interim += t;
+        }
+      }
+      // Show final text in input; show interim in the recording bar label
+      if (finalTxt) {
+        messageInput.value = finalTxt;
+        updateSendBtnState();
+        recLabel.textContent = `✅ Got it: "${finalTxt}"`;
+      } else if (interim) {
+        recLabel.textContent = `🎙 Hearing: "${interim}"`;
+        // Mirror interim into the input too for real-time feel
+        messageInput.value = interim;
+        updateSendBtnState();
+      }
+    };
+
+    rec.onerror = (e) => {
+      let msg = '⚠️ Microphone error — please try again.';
+      if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+        msg = '🔒 Microphone access denied. Enable it in your browser settings.';
+      } else if (e.error === 'no-speech') {
+        msg = '🔇 No speech detected. Please speak clearly after clicking the mic.';
+      } else if (e.error === 'network') {
+        msg = '🌐 Network error. Check connection and try again.';
+      } else if (e.error === 'audio-capture') {
+        msg = '🎤 No microphone found. Please connect one and retry.';
+      } else if (e.error === 'aborted') {
+        msg = '';   // User-initiated abort — no error needed
+      }
+      _stopWaveformVisualizer();
+      if (msg) _showVoiceError(msg);
+      else stopRecording();
+    };
+
+    rec.onend = () => {
+      _stopWaveformVisualizer();
+      stopRecording();
+      // Auto-send if there's transcribed text
+      const text = messageInput.value.trim();
+      if (text.length > 0) {
+        sendMessage();
+      }
+    };
+
+    // ── Start recording ─────────────────────────────────────────────────────
+    try {
+      rec.start();
+      // Start real-time waveform visualizer (non-blocking)
+      _startWaveformVisualizer();
+    } catch (err) {
+      console.warn('[VoiceRec] Failed to start:', err.message);
+      _showVoiceError('⚠️ Could not start microphone. Please try again.');
     }
   });
 }
@@ -679,6 +841,8 @@ function setupVoice() {
 function stopRecording() {
   state.isRecording = false;
   voiceBtn.classList.remove('recording');
+  voiceBtn.setAttribute('aria-label', 'Record voice query');
+  voiceBtn.title = 'Voice Input / Recording';
   recordingBar.classList.remove('active');
 }
 
