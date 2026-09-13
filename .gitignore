@@ -3,11 +3,9 @@
 backend/.env
 *.env
 
-# Large media files (>50MB, use external hosting instead)
-sources/*.mov
-sources/*.mp4
+# OS junk
 .DS_Store
-sources/.DS_Store
+Thumbs.db
 
 # Python
 __pycache__/
