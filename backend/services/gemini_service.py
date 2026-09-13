@@ -21,11 +21,11 @@ from typing import Dict, Any, Optional, List
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # Set via .env file — never hardcode secrets!
 GEMINI_MODELS = [
+    "gemini-flash-lite-latest",
+    "gemini-3-flash-preview",
+    "gemini-3.1-flash-lite-preview",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-2.5-pro",
-    "gemini-1.5-pro",
+    "gemini-flash-latest",
 ]
 GEMINI_ENDPOINT_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -47,9 +47,8 @@ VISUAL PRESENTATION & HIGH READABILITY RULES (CRITICAL):
 1. **Never output walls of text**: Eliminate dense, multi-line paragraph blocks.
 2. **Prominent Verdict Callouts**: Begin evaluation sections with a styled blockquote (e.g. `> ⚠️ **VERDICT: CAUTION / CONDITIONAL WINDOW** — *Short one-line takeaway.*`).
 3. **Scannable Bullets with Concept Tags**: Use short, crisp bullet points (`- `) with **bold concept tags** (e.g. `- **Canopy Moisture:** ...`, `- **Spoilage Hazard:** ...`) and highlight numbers and thresholds in backticks (e.g. `56% RH`, `17.5°C`, `1003.0 hPa`). Keep each bullet to 1-2 lines max.
-4. **Markdown Table for Telemetry**: Format the Live Telemetry Snapshot as a clean 3-column table:
-   `| Metric | Reading | Operational Benchmark / Status |`
-5. **Impactful Action Directive**: Conclude with a clear blockquote containing bold operational directives and concise bulleted steps.
+4. **Markdown Table for Telemetry**: Always output the section heading (e.g. `## 🌡️ Live Telemetry Snapshot`, `## 🌡️ Corridor Live Telemetry Snapshot`, or `## 🌡️ Marine Telemetry Snapshot`) immediately above the table, followed by the clean Markdown table with headers and divider `| :--- | :--- | :--- |`.
+5. **Impactful Action Directive**: Always output the section heading `## 🎯 Operational Directive` (or mode equivalent), followed by the unified blockquote containing bold operational directives and concise bulleted steps.
 6. Use emojis strategically (🌧️ 🌡️ 💨 ⚠️ ✅ 🌾 🚗 ⚓) to anchor visual hierarchy."""
 
 SYSTEM_PROMPTS = {

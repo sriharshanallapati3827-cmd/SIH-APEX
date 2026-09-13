@@ -355,7 +355,7 @@ async function sendMessage() {
   }
 
   // 2. Append user bubble
-  appendUserMessage(text);
+  const userRow = appendUserMessage(text);
   state.messages.push({ role: 'user', content: text });
 
   // Auto-title from first message
@@ -383,9 +383,18 @@ async function sendMessage() {
     setTimeout(() => {
       typingEl.remove();
       state.isTyping = false;
-      appendAIMessage(response.text, response.card);
+      const aiRow = appendAIMessage(response.text, response.card);
       state.messages.push({ role: 'ai', content: response.text });
-      scrollToBottom();
+      
+      // Keep view anchored to the user query and beginning of the AI response (instead of jumping to bottom)
+      requestAnimationFrame(() => {
+        if (userRow) {
+          userRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (aiRow) {
+          aiRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+
       // Persist session to localStorage
       saveCurrentSession();
       renderChatHistory();
@@ -395,7 +404,11 @@ async function sendMessage() {
     typingEl.remove();
     state.isTyping = false;
     appendAIMessage("I encountered a temporary connection issue. Showing official baseline weather data instead.", weatherData.delhi);
-    scrollToBottom();
+    requestAnimationFrame(() => {
+      if (userRow) {
+        userRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 }
 
@@ -420,6 +433,7 @@ function appendUserMessage(text) {
   row.className = 'message-row user';
   row.innerHTML = `<div class="user-msg-content">${escapeHtml(text)}</div>`;
   messagesList.appendChild(row);
+  return row;
 }
 
 /** Renders typing dots */
@@ -480,6 +494,7 @@ function appendAIMessage(text, card = null) {
     </div>
   `;
   messagesList.appendChild(row);
+  return row;
 }
 
 /**
@@ -735,15 +750,17 @@ async function generateResponseAsync(query, mode, lang) {
           }
         }
 
-        if (answer && !answer.startsWith('WeatherGPT Connection Error') && !answer.startsWith('⏳') && !answer.startsWith('⚠️ WeatherGPT Intelligence Engine temporarily unavailable')) {
-          // Update client-side history from backend's authoritative updated list
-          if (data.conversation_history && Array.isArray(data.conversation_history)) {
-            state.conversationHistory = data.conversation_history;
-          } else {
-            state.conversationHistory.push(
-              { role: 'user',  text: query },
-              { role: 'model', text: answer }
-            );
+        if (answer) {
+          if (!answer.startsWith('WeatherGPT Connection Error') && !answer.startsWith('⏳') && !answer.startsWith('⚠️ WeatherGPT Intelligence Engine')) {
+            // Update client-side history from backend's authoritative updated list
+            if (data.conversation_history && Array.isArray(data.conversation_history)) {
+              state.conversationHistory = data.conversation_history;
+            } else {
+              state.conversationHistory.push(
+                { role: 'user',  text: query },
+                { role: 'model', text: answer }
+              );
+            }
           }
 
           // Build rich card if backend returned city realtime telemetry

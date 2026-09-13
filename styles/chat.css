@@ -816,6 +816,7 @@ html, body {
   gap: 16px;
   width: 100%;
   animation: msgAppear 0.3s ease;
+  scroll-margin-top: 24px;
 }
 @keyframes msgAppear {
   from { opacity: 0; transform: translateY(8px); }
