@@ -19,6 +19,12 @@ from services.weather_service import (
     get_alerts_by_coords,
 )
 from services.gemini_service import query_gemini
+from services.safety_guardrail import (
+    check_spatial_circuit_breaker,
+    format_deterministic_bulletin,
+    get_all_active_zones,
+    register_active_zone,
+)
 
 router = APIRouter()
 
@@ -394,6 +400,8 @@ def resolve_weather_telemetry(message: str, mode: str = "home", lat: float = Non
             if w_data and w_data.get("weather"):
                 telemetry["type"] = "city_realtime"
                 telemetry["location"] = f"{w_data.get('city')}, {w_data.get('country')}"
+                telemetry["latitude"] = w_data.get("latitude")
+                telemetry["longitude"] = w_data.get("longitude")
                 telemetry["current_telemetry"] = w_data.get("weather", {})
                 return telemetry
         except Exception as ex:
@@ -446,6 +454,31 @@ def chat_with_gemini(request: ChatRequest):
     # Resolve live weather telemetry for routes and cities
     weather_ctx = resolve_weather_telemetry(message, mode=mode, lat=request.latitude, lon=request.longitude)
 
+    # ── SPATIAL SAFETY CIRCUIT BREAKER (PostGIS / Deterministic Guardrail) ──
+    # If user coordinates or the resolved city fall within an active disaster zone,
+    # FREEZE generative LLM text synthesis and return 100% pre-verified official bulletin!
+    target_lat = request.latitude if (request.latitude is not None and request.latitude != 0) else (weather_ctx and weather_ctx.get("latitude"))
+    target_lon = request.longitude if (request.longitude is not None and request.longitude != 0) else (weather_ctx and weather_ctx.get("longitude"))
+
+    if target_lat is not None and target_lon is not None:
+        disaster_alert = check_spatial_circuit_breaker(target_lat, target_lon)
+        if disaster_alert:
+            bulletin = format_deterministic_bulletin(disaster_alert, float(target_lat), float(target_lon))
+            updated_history = history + [
+                {"role": "user",  "text": message},
+                {"role": "model", "text": bulletin},
+            ]
+            return {
+                "question": message,
+                "mode": mode,
+                "answer": bulletin,
+                "source": f"Deterministic Safety Guardrail ({disaster_alert.get('issuing_authority', 'NDMA/IMD')})",
+                "circuit_breaker_triggered": True,
+                "disaster_alert": disaster_alert,
+                "weather_telemetry": weather_ctx,
+                "conversation_history": updated_history,
+            }
+
     # Generate live context-aware decision from Gemini with full memory and live telemetry
     gemini_answer = query_gemini(message, mode=mode, weather_context=weather_ctx, history=history)
 
@@ -460,7 +493,55 @@ def chat_with_gemini(request: ChatRequest):
         "mode": mode,
         "answer": gemini_answer,
         "source": "Google Gemini Intelligence + Open-Meteo Weather Telemetry",
+        "circuit_breaker_triggered": False,
         "weather_telemetry": weather_ctx,
         "conversation_history": updated_history,   # Frontend sends this back next turn
     }
+
+
+# ── SAFETY GUARDRAIL DIAGNOSTIC & ADMIN ENDPOINTS ────────────────────────────
+@router.get("/api/safety/check")
+def safety_check(latitude: float, longitude: float):
+    """
+    Spatial safety query: Returns active disaster hazard if point intersects
+    any active hazard polygon (PostGIS ST_Contains).
+    """
+    alert = check_spatial_circuit_breaker(latitude, longitude)
+    if alert:
+        return {
+            "in_hazard_zone": True,
+            "circuit_breaker_triggered": True,
+            "latitude": latitude,
+            "longitude": longitude,
+            "alert": alert,
+            "bulletin": format_deterministic_bulletin(alert, latitude, longitude)
+        }
+    return {
+        "in_hazard_zone": False,
+        "circuit_breaker_triggered": False,
+        "latitude": latitude,
+        "longitude": longitude,
+        "status": "Safe — Coordinates lie outside all active NDMA/IMD disaster polygons."
+    }
+
+
+@router.get("/api/safety/zones")
+def list_active_hazard_zones():
+    """Lists all active disaster hazard polygons loaded in the spatial engine."""
+    zones = get_all_active_zones()
+    return {
+        "count": len(zones),
+        "active_disaster_zones": zones
+    }
+
+
+@router.post("/api/safety/zone")
+def ingest_hazard_zone(zone_payload: dict):
+    """Admin endpoint to ingest a new NDMA/IMD hazard polygon at runtime."""
+    try:
+        registered = register_active_zone(zone_payload)
+        return {"status": "success", "zone": registered}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 

@@ -786,6 +786,21 @@ async function generateResponseAsync(query, mode, lang) {
             };
           }
 
+          // If spatial disaster circuit breaker was triggered, render red emergency card
+          if (data.circuit_breaker_triggered && data.disaster_alert) {
+            const da = data.disaster_alert;
+            card = {
+              city: da.event_name || 'Active Disaster Zone',
+              temp: 'ALERT',
+              icon: '🚨',
+              desc: `${da.issuing_authority || 'NDMA'} Bulletin`,
+              humidity: 'N/A',
+              wind: 'CRITICAL',
+              visibility: 'SHELTER',
+              alert: `🛑 ${da.alert_id}: Official Pre-verified Protocol (LLM Frozen)`
+            };
+          }
+
           // Persist latest telemetry into client-side IndexedDB Edge Cache
           if (window.WeatherOfflineStore) {
             window.WeatherOfflineStore.saveTelemetry(
