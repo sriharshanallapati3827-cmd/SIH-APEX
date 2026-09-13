@@ -275,6 +275,7 @@ def build_weather_context(
             raw_a = get_alerts_by_city(q_location)
             location_name = raw_a["city"]
             country = raw_a.get("country")
+            coords = {"latitude": raw_a.get("latitude"), "longitude": raw_a.get("longitude")}
         source = raw_a.get("source", source)
         weather_data = {
             "alerts": raw_a.get("alerts", []),

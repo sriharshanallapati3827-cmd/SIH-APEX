@@ -87,6 +87,8 @@ def get_forecast_by_city(city: str, period: str = "next_7_days") -> Dict[str, An
     result = {
         "city": location["name"],
         "country": location.get("country"),
+        "latitude": location["latitude"],
+        "longitude": location["longitude"],
         "forecast_period": forecast_result.get("forecast_period", period),
         "forecast": forecast_result["forecast"],
         "source": forecast_result.get("source", provider.name)
@@ -111,6 +113,9 @@ def get_alerts_by_city(city: str) -> Dict[str, Any]:
 
     return {
         "city": location["name"],
+        "country": location.get("country"),
+        "latitude": location["latitude"],
+        "longitude": location["longitude"],
         "alerts": alerts_result["alerts"],
         "source": alerts_result.get("source", provider.name)
     }

@@ -21,12 +21,11 @@ from typing import Dict, Any, Optional, List
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # Set via .env file — never hardcode secrets!
 GEMINI_MODELS = [
-    "gemini-3.5-flash",
-    "gemini-3.6-flash",
-    "gemini-flash-latest",
-    "gemini-3.7-flash",
-    "gemini-3.8-flash",
-    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
+    "gemini-1.5-pro",
 ]
 GEMINI_ENDPOINT_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -263,12 +262,8 @@ def query_gemini(
                     "parts": [{"text": text}]
                 })
 
-    # Build the current user prompt (inject system + weather context only on first turn or always)
+    # Build the current user prompt (inject weather context when present)
     current_prompt = ""
-    if not contents:
-        # First message in conversation — include full system prompt
-        current_prompt = f"{system_instruction}\n\n"
-
     if weather_context:
         current_prompt += f"🌡️ LIVE WEATHER TELEMETRY:\n```json\n{json.dumps(weather_context, indent=2)}\n```\n\n"
 

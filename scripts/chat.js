@@ -745,7 +745,27 @@ async function generateResponseAsync(query, mode, lang) {
               { role: 'model', text: answer }
             );
           }
-          return { text: answer };
+
+          // Build rich card if backend returned city realtime telemetry
+          let card = null;
+          if (data.weather_telemetry && data.weather_telemetry.type === 'city_realtime') {
+            const wt = data.weather_telemetry;
+            const cur = wt.current_telemetry || {};
+            card = {
+              city: wt.location || 'Local Weather',
+              temp: cur.temperature !== undefined ? `${Math.round(cur.temperature)}°C` : (cur.temperature_2m !== undefined ? `${Math.round(cur.temperature_2m)}°C` : 'N/A'),
+              icon: '🌤',
+              desc: cur.condition || cur.weather_description || 'Current Weather',
+              humidity: cur.humidity !== undefined ? `${Math.round(cur.humidity)}%` : (cur.relative_humidity_2m !== undefined ? `${Math.round(cur.relative_humidity_2m)}%` : 'N/A'),
+              wind: cur.wind_speed !== undefined ? `${Math.round(cur.wind_speed)} km/h` : (cur.wind_speed_10m !== undefined ? `${Math.round(cur.wind_speed_10m)} km/h` : 'N/A'),
+              visibility: '10 km',
+              pressure: cur.pressure ? `${Math.round(cur.pressure)} hPa` : '1012 hPa',
+              apparent: cur.feels_like ? `${Math.round(cur.feels_like)}°C` : null,
+              alert: null,
+            };
+          }
+
+          return { text: answer, card: card };
         }
       } else if (backendRes.status === 503 || backendRes.status === 429) {
         // API overloaded — wait and retry
